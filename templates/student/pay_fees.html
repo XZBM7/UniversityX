@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Tuition Fee Payment</title>
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --primary-dark: #3a56d4;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+            --light-color: #f8f9fa;
+            --dark-color: #343a40;
+            --border-radius: 12px;
+            --box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .payment-card {
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            overflow: hidden;
+            display: flex;
+            min-height: 600px;
+        }
+
+        .payment-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .payment-header h1 {
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .payment-sidebar {
+            flex: 1;
+            background: linear-gradient(135deg, #2b2d42, #1a1a2e);
+            color: white;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .payment-content {
+            flex: 2;
+            padding: 2rem;
+        }
+
+        .payment-details {
+            margin-bottom: 2rem;
+        }
+
+        .amount-display {
+            background: rgba(40, 167, 69, 0.1);
+            border: 2px dashed var(--success-color);
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .amount-display h2 {
+            color: var(--success-color);
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .amount-display p {
+            color: #666;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #444;
+        }
+
+        input {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid #ddd;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            transition: var(--transition);
+        }
+
+        input:focus {
+            border-color: var(--primary-color);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+        }
+
+        .card-icons {
+            display: flex;
+            gap: 10px;
+            margin-top: 0.5rem;
+        }
+
+        .card-icon {
+            width: 40px;
+            height: 25px;
+            background-color: #eee;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        .btn {
+            display: inline-block;
+            background: var(--primary-color);
+            color: white;
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            width: 100%;
+            text-align: center;
+        }
+
+        .btn:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .receipt {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            box-shadow: var(--box-shadow);
+            text-align: center;
+            display: none;
+        }
+
+        .receipt-show {
+            display: block;
+        }
+
+        .receipt h2 {
+            color: var(--success-color);
+            margin-bottom: 1rem;
+        }
+
+        .receipt-icon {
+            font-size: 4rem;
+            color: var(--success-color);
+            margin-bottom: 1rem;
+        }
+
+        .receipt-details {
+            text-align: left;
+            margin: 2rem 0;
+            border-top: 1px solid #eee;
+            padding-top: 1rem;
+        }
+
+        .receipt-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+
+        .receipt-row.total {
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #eee;
+        }
+
+        .payment-steps {
+            margin-bottom: 2rem;
+        }
+
+        .step {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+            color: #666;
+        }
+
+        .step.active {
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        .step.completed {
+            color: var(--success-color);
+        }
+
+        .step-number {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #eee;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 1rem;
+            flex-shrink: 0;
+        }
+
+        .active .step-number {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .completed .step-number {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .flash-message {
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            border-radius: var(--border-radius);
+            font-weight: 600;
+            text-align: center;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .flash-success {
+            background-color: rgba(40, 167, 69, 0.1);
+            color: var(--success-color);
+            border: 1px solid rgba(40, 167, 69, 0.3);
+        }
+
+        .flash-danger {
+            background-color: rgba(220, 53, 69, 0.1);
+            color: var(--danger-color);
+            border: 1px solid rgba(220, 53, 69, 0.3);
+        }
+
+        .flash-warning {
+            background-color: rgba(255, 193, 7, 0.1);
+            color: var(--warning-color);
+            border: 1px solid rgba(255, 193, 7, 0.3);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .payment-card {
+                flex-direction: column;
+            }
+            
+            .payment-sidebar {
+                order: -1;
+            }
+        }
+
+        /* Payment status */
+        .payment-status {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            text-align: center;
+        }
+
+        .paid-status {
+            background-color: rgba(40, 167, 69, 0.1);
+            color: var(--success-color);
+            border: 1px solid rgba(40, 167, 69, 0.3);
+        }
+
+        .unpaid-status {
+            background-color: rgba(220, 53, 69, 0.1);
+            color: var(--danger-color);
+            border: 1px solid rgba(220, 53, 69, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="payment-card">
+            <div class="payment-content">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="flash-message flash-{{ category }}">{{ message }}</div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <div class="payment-status {% if payment_status == 'paid' %}paid-status{% else %}unpaid-status{% endif %}">
+                    {% if payment_status == 'paid' %}
+                        <h2>Payment Successful</h2>
+                        <p>Thank you! You now have full access to all services.</p>
+                    {% else %}
+                        <h2>Tuition Fees Unpaid</h2>
+                        <p>Please complete the payment to access services.</p>
+                    {% endif %}
+                </div>
+
+                {% if payment_status != 'paid' %}
+                <div class="payment-details">
+                    <h1 class="payment-header">Tuition Fee Payment</h1>
+                    
+                    <div class="amount-display">
+                        <h2>EGP {{ amount }}</h2>
+                        <p>Amount due for Year {{ stage }}</p>
+                    </div>
+
+                    <div class="payment-steps">
+                        <div class="step active">
+                            <span class="step-number">1</span>
+                            <span>Payment Information</span>
+                        </div>
+                        <div class="step">
+                            <span class="step-number">2</span>
+                            <span>Review Details</span>
+                        </div>
+                        <div class="step">
+                            <span class="step-number">3</span>
+                            <span>Complete Payment</span>
+                        </div>
+                    </div>
+
+                    <form method="POST" action="{{ url_for('student.pay_fees') }}" id="paymentForm" novalidate>
+                        <div class="form-group">
+                            <label for="card_number">Card Number</label>
+                            <input type="text" id="card_number" name="card_number" maxlength="19" 
+                                   placeholder="1234 5678 9012 3456" required
+                                   pattern="\d{13,19}" title="Please enter a valid card number">
+                            <div class="card-icons">
+                                <div class="card-icon">VISA</div>
+                                <div class="card-icon">MC</div>
+                                <div class="card-icon">MADA</div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="expiry_date">Expiry Date</label>
+                            <input type="month" id="expiry_date" name="expiry_date" required 
+                                   min="{{ current_year_month }}" title="Please select a valid expiry date">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="cvv">Security Code (CVV)</label>
+                            <input type="password" id="cvv" name="cvv" maxlength="4" 
+                                   placeholder="123" required
+                                   pattern="\d{3,4}" title="Please enter a valid security code (3 or 4 digits)">
+                        </div>
+
+                        <button type="submit" class="btn">Pay EGP {{ amount }}</button>
+                    </form>
+                </div>
+                {% else %}
+                <div class="receipt receipt-show">
+                    <div class="receipt-icon">✓</div>
+                    <h2>Payment Completed</h2>
+                    <p>Thank you for paying your tuition fees.</p>
+                    
+                    <div class="receipt-details">
+                        <div class="receipt-row">
+                            <span>Transaction ID:</span>
+                            <span>{{ payment_id }}</span>
+                        </div>
+                        <div class="receipt-row">
+                            <span>Payment Date:</span>
+                            <span>{{ payment_date }}</span>
+                        </div>
+                        <div class="receipt-row">
+                            <span>Academic Year:</span>
+                            <span>Year {{ stage }}</span>
+                        </div>
+                        <div class="receipt-row">
+                            <span>Payment Method:</span>
+                            <span>Credit Card</span>
+                        </div>
+                        <div class="receipt-row total">
+                            <span>Total Amount:</span>
+                            <span>EGP {{ amount }}</span>
+                        </div>
+                    </div>
+
+                    <a href="{{ url_for('student.dashboard') }}" class="btn">Back to Dashboard</a>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="payment-sidebar">
+                <div>
+                    <h2>Fee Details</h2>
+                    <p>Academic Year: {{ stage }}</p>
+                    <p>Due Date: {{ due_date }}</p>
+                    
+                    <h2 style="margin-top: 2rem;">Payment Benefits</h2>
+                    <ul style="list-style-type: none; margin-top: 1rem; padding-left: 0;">
+                        <li style="margin-bottom: 0.5rem;">✓ Full access to the platform</li>
+                        <li style="margin-bottom: 0.5rem;">✓ Download study materials</li>
+                        <li style="margin-bottom: 0.5rem;">✓ Register for exams</li>
+                        <li style="margin-bottom: 0.5rem;">✓ Track your results</li>
+                    </ul>
+                </div>
+
+                <div>
+                    <p>For assistance, please contact technical support:</p>
+                    <p>Email: support@edu.sa</p>
+                    <p>Phone: 920000000</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('card_number').addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
+            let formatted = value.replace(/(\d{4})/g, '$1 ').trim();
+            e.target.value = formatted;
+        });
+
+        document.getElementById('cvv').addEventListener('input', function(e) {
+            e.target.value = e.target.value.replace(/[^0-9]/g, '');
+        });
+
+        document.getElementById('paymentForm').addEventListener('submit', function(e) {
+            let cardNumber = document.getElementById('card_number').value.replace(/\s+/g, '');
+            let expiry = document.getElementById('expiry_date').value;
+            let cvv = document.getElementById('cvv').value;
+
+            if (cardNumber.length < 13 || cardNumber.length > 19) {
+                alert('Please enter a valid card number');
+                e.preventDefault();
+                return false;
+            }
+
+            if (!expiry) {
+                alert('Please select a valid expiry date');
+                e.preventDefault();
+                return false;
+            }
+
+            if (cvv.length < 3 || cvv.length > 4) {
+                alert('Please enter a valid security code (3 or 4 digits)');
+                e.preventDefault();
+                return false;
+            }
+
+            return true;
+        });
+    </script>
+</body>
+</html>

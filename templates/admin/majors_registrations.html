@@ -1,0 +1,236 @@
+{% extends "admin/base.html" %}
+{% block title %}Students Registered by Major{% endblock %}
+{% block content %}
+<style>
+    /* body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background-color: #f5f7fa;
+        margin: 0;
+        padding: 20px;
+    } */
+
+    .container {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    h1 {
+        color: #2c3e50;
+        text-align: center;
+        margin-bottom: 30px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid #3498db;
+        font-weight: 600;
+    }
+
+    .search-container {
+        margin-bottom: 30px;
+        display: flex;
+        justify-content: center;
+    }
+
+    #searchInput {
+        padding: 10px 15px;
+        width: 300px;
+        border: 1px solid #ddd;
+        border-radius: 25px;
+        font-size: 16px;
+        outline: none;
+        transition: all 0.3s;
+    }
+
+    #searchInput:focus {
+        border-color: #3498db;
+        box-shadow: 0 0 8px rgba(52, 152, 219, 0.3);
+    }
+
+    /* Major Section Styling */
+    .major-header {
+        background-color: #3498db;
+        color: white;
+        padding: 12px 20px;
+        border-radius: 5px;
+        margin: 25px 0 15px;
+        font-size: 1.3em;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .major-header::after {
+        content: "";
+        flex: 1;
+        margin-left: 15px;
+        height: 1px;
+        background-color: rgba(255,255,255,0.5);
+    }
+
+    .status-badge {
+        background-color: #e74c3c;
+        padding: 3px 10px;
+        border-radius: 20px;
+        font-size: 0.7em;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-left: 15px;
+    }
+
+    .status-badge.open {
+        background-color: #2ecc71;
+    }
+
+    .student-list {
+        list-style-type: none;
+        padding: 0;
+        margin: 0;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 15px;
+    }
+
+    .student-card {
+        background-color: white;
+        padding: 15px;
+        border-radius: 5px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        transition: transform 0.2s, box-shadow 0.2s;
+        border-left: 4px solid #3498db;
+    }
+
+    .student-card.highlight {
+        background-color: #fffde7;
+        border-left: 4px solid #ffc107;
+        animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.02); }
+        100% { transform: scale(1); }
+    }
+
+    .student-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    .student-info {
+        margin: 5px 0;
+    }
+
+    .student-name {
+        font-weight: 600;
+        color: #2c3e50;
+    }
+
+    .student-id {
+        color: #e74c3c;
+        font-weight: 500;
+    }
+
+    .no-students {
+        background-color: #f8f9fa;
+        padding: 15px;
+        border-radius: 5px;
+        color: #7f8c8d;
+        text-align: center;
+        font-style: italic;
+        border: 1px dashed #bdc3c7;
+    }
+
+    @media (max-width: 768px) {
+        .student-list {
+            grid-template-columns: 1fr;
+        }
+        
+        h1 {
+            font-size: 1.5em;
+        }
+        
+        #searchInput {
+            width: 100%;
+        }
+    }
+</style>
+
+<div class="container">
+    <h1>Students Registered by Major</h1>
+    
+    <div class="search-container">
+        <input type="text" id="searchInput" placeholder="Search by University ID..." autocomplete="off">
+    </div>
+    
+    {% for item in majors_with_students %}
+    <div class="major-section">
+        <div class="major-header">
+            <span>{{ item.major.name }}</span>
+            <span class="status-badge {{ 'open' if item.major.registration_open else 'closed' }}">
+                {{ 'Open' if item.major.registration_open else 'Closed' }}
+            </span>
+        </div>
+        
+        {% if item.students %}
+        <ul class="student-list">
+            {% for student in item.students %}
+            <li class="student-card" data-id="{{ student.university_id }}">
+                <p class="student-info"><span class="student-name">{{ student.name }}</span></p>
+                <p class="student-info">Stage: {{ student.stage }}</p>
+                <p class="student-info">University ID: <span class="student-id">{{ student.university_id }}</span></p>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="no-students">No students registered for this major.</p>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('searchInput');
+        const studentCards = document.querySelectorAll('.student-card');
+        
+        function removeHighlights() {
+            studentCards.forEach(card => {
+                card.classList.remove('highlight');
+            });
+        }
+        
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.trim().toLowerCase();
+            let found = false;
+            
+            removeHighlights();
+            
+            if (searchTerm.length > 0) {
+                studentCards.forEach(card => {
+                    const studentId = card.getAttribute('data-id').toLowerCase();
+                    
+                    if (studentId.includes(searchTerm)) {
+                        card.classList.add('highlight');
+                        found = true;
+                        
+                        if (!found) {
+                            card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                    }
+                });
+            }
+            
+            if (!found && searchTerm.length > 0) {
+            }
+        });
+        
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                searchInput.value = '';
+                removeHighlights();
+            }
+        });
+    });
+</script>
+{% endblock %}

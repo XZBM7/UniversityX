@@ -1,0 +1,247 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Add New Doctor - Admin{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h1 class="page-title">
+            <i class="fas fa-user-md"></i>
+            Add New Doctor
+        </h1>
+        <div class="action-buttons">
+            <a href="{{ url_for('admin.list_doctors') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i>
+                Back to Doctors List
+            </a>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('admin.add_doctor') }}" class="doctor-form" id="doctorForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Full Name</label>
+                        <input type="text" name="name" class="form-control" required
+                            placeholder="Enter doctor's full name">
+                        <div class="invalid-feedback">Please provide a valid name</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Email Address</label>
+                        <input type="email" name="email" class="form-control" required
+                            placeholder="Enter professional email">
+                        <div class="invalid-feedback">Please provide a valid email</div>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Password</label>
+                        <div class="password-input">
+                            <input type="password" name="password" id="password" class="form-control" required
+                                placeholder="Create a password" minlength="8">
+                            <button type="button" class="toggle-password" onclick="togglePassword()">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                        <small class="form-text">Minimum 8 characters</small>
+                        <div class="invalid-feedback">Password must be at least 8 characters</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Academic Stage (1-4)</label>
+                        <select name="stage" class="form-select" required>
+                            <option value="" disabled selected>Select stage</option>
+                            <option value="1">Stage 1</option>
+                            <option value="2">Stage 2</option>
+                            <option value="3">Stage 3</option>
+                            <option value="4">Stage 4</option>
+                        </select>
+                        <div class="invalid-feedback">Please select a stage</div>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i>
+                        Add Doctor
+                    </button>
+                    <button type="reset" class="btn btn-secondary">
+                        <i class="fas fa-undo"></i>
+                        Clear Form
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    .doctor-form {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    .form-row {
+        display: flex;
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .form-group {
+        flex: 1;
+        margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        color: #5a5c69;
+    }
+
+    .form-control,
+    .form-select {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #d1d3e2;
+        border-radius: 0.35rem;
+        font-size: 1rem;
+        transition: border-color 0.15s;
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+        border-color: #4e73df;
+        outline: 0;
+        box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+    }
+
+    .password-input {
+        position: relative;
+    }
+
+    .toggle-password {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: #6e707e;
+        cursor: pointer;
+    }
+
+    .form-select {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 0.75rem center;
+        background-size: 16px 12px;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+    }
+
+    .form-text {
+        color: #858796;
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+    }
+
+    .invalid-feedback {
+        color: #e74a3b;
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+        display: none;
+    }
+
+    .was-validated .form-control:invalid~.invalid-feedback,
+    .was-validated .form-select:invalid~.invalid-feedback {
+        display: block;
+    }
+
+    .was-validated .form-control:invalid,
+    .was-validated .form-select:invalid {
+        border-color: #e74a3b;
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+        padding-top: 1rem;
+        border-top: 1px solid #e3e6f0;
+    }
+
+    @media (max-width: 768px) {
+        .form-row {
+            flex-direction: column;
+            gap: 0;
+        }
+    }
+</style>
+
+<script>
+    function togglePassword() {
+        const passwordInput = document.getElementById('password');
+        const toggleBtn = document.querySelector('.toggle-password i');
+
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            toggleBtn.classList.replace('fa-eye', 'fa-eye-slash');
+        } else {
+            passwordInput.type = 'password';
+            toggleBtn.classList.replace('fa-eye-slash', 'fa-eye');
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const form = document.getElementById('doctorForm');
+
+        form.addEventListener('submit', function (e) {
+            const password = document.getElementById('password').value;
+            if (password.length < 8) {
+                e.preventDefault();
+                form.classList.add('was-validated');
+                return;
+            }
+
+            const stage = document.querySelector('select[name="stage"]');
+            if (!stage.value) {
+                e.preventDefault();
+                form.classList.add('was-validated');
+            }
+        });
+
+        document.getElementById('password').addEventListener('input', function () {
+            if (this.value.length >= 8) {
+                this.classList.remove('is-invalid');
+                this.classList.add('is-valid');
+            } else {
+                this.classList.remove('is-valid');
+                this.classList.add('is-invalid');
+            }
+        });
+
+        let formChanged = false;
+        form.querySelectorAll('input, select').forEach(element => {
+            element.addEventListener('change', () => {
+                formChanged = true;
+            });
+        });
+
+        window.addEventListener('beforeunload', function (e) {
+            if (formChanged) {
+                e.preventDefault();
+                e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
+            }
+        });
+
+        form.addEventListener('submit', function () {
+            formChanged = false;
+        });
+    });
+</script>
+{% endblock %}

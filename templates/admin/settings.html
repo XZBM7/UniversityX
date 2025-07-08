@@ -1,0 +1,423 @@
+{% extends "admin/base.html" %}
+
+{% block extra_css %}
+<style>
+    .settings-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    .settings-tabs {
+        display: flex;
+        border-bottom: 1px solid #dee2e6;
+        margin-bottom: 2rem;
+    }
+
+    .settings-tab {
+        padding: 1rem 2rem;
+        cursor: pointer;
+        border: 1px solid transparent;
+        border-bottom: none;
+        border-radius: 5px 5px 0 0;
+        margin-right: 5px;
+        transition: all 0.3s;
+        font-weight: 600;
+        color: #6c757d;
+    }
+
+    .settings-tab.active {
+        color: #2c3e50;
+        background: white;
+        border-color: #dee2e6;
+        border-bottom: 1px solid white;
+        margin-bottom: -1px;
+    }
+
+    .settings-tab:hover:not(.active) {
+        background: #f8f9fa;
+    }
+
+    .settings-content {
+        background: white;
+        border-radius: 5px;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.05);
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .tab-pane {
+        display: none;
+    }
+
+    .tab-pane.active {
+        display: block;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
+    .form-control {
+        border-radius: 5px;
+        padding: 0.75rem 1rem;
+        border: 1px solid #ced4da;
+        width: 100%;
+        transition: all 0.3s;
+    }
+
+    .form-control:focus {
+        border-color: #4ca1af;
+        box-shadow: 0 0 0 0.2rem rgba(76, 161, 175, 0.25);
+    }
+
+    .form-check {
+        margin-bottom: 1rem;
+    }
+
+    .form-check-input {
+        margin-right: 0.5rem;
+    }
+
+    .btn-save {
+        background: linear-gradient(135deg, #2c3e50 0%, #4ca1af 100%);
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 5px;
+        font-weight: 600;
+        transition: all 0.3s;
+    }
+
+    .btn-save:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(44, 62, 80, 0.2);
+    }
+
+    .theme-selector {
+        display: flex;
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+
+    .theme-option {
+        flex: 1;
+        text-align: center;
+        cursor: pointer;
+        padding: 1rem;
+        border-radius: 5px;
+        border: 2px solid #dee2e6;
+        transition: all 0.3s;
+    }
+
+    .theme-option:hover {
+        border-color: #adb5bd;
+    }
+
+    .theme-option.selected {
+        border-color: #2c3e50;
+        background: #f8f9fa;
+    }
+
+    .theme-preview {
+        width: 100%;
+        height: 100px;
+        border-radius: 3px;
+        margin-bottom: 0.5rem;
+    }
+
+    .theme-light {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    }
+
+    .theme-dark {
+        background: linear-gradient(135deg, #343a40 0%, #212529 100%);
+    }
+
+    .theme-blue {
+        background: linear-gradient(135deg, #2c3e50 0%, #4ca1af 100%);
+    }
+
+    .test-email-btn {
+        margin-left: 1rem;
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+    }
+
+    @media (max-width: 768px) {
+        .settings-tabs {
+            flex-direction: column;
+            border-bottom: none;
+        }
+
+        .settings-tab {
+            border-radius: 5px;
+            border: 1px solid #dee2e6;
+            margin-bottom: 5px;
+        }
+
+        .settings-tab.active {
+            border-bottom: 1px solid #dee2e6;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="settings-container">
+    <div class="page-header">
+        <h1 class="page-title">
+            <i class="fas fa-cog"></i>
+            System Settings
+        </h1>
+    </div>
+
+    <div class="settings-tabs">
+        <div class="settings-tab active" data-tab="system">System Settings</div>
+        <div class="settings-tab" data-tab="email">Email Settings</div>
+        <div class="settings-tab" data-tab="security">Security</div>
+    </div>
+
+    <form method="POST" id="settings-form">
+        <div class="settings-content tab-pane active" id="system-tab">
+            <h3 class="mb-4"><i class="fas fa-server mr-2"></i>System Configuration</h3>
+
+            <div class="form-group">
+                <label class="form-label">Site Name</label>
+                <input type="text" class="form-control" name="site_name"
+                    value="{{ system_settings.get('site_name', 'University X') }}">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Default Theme</label>
+                <div class="theme-selector">
+                    <div class="theme-option {% if system_settings.get('default_theme', 'light') == 'light' %}selected{% endif %}"
+                        data-theme="light">
+                        <div class="theme-preview theme-light"></div>
+                        <input type="radio" name="default_theme" value="light" {% if
+                            system_settings.get('default_theme', 'light' )=='light' %}checked{% endif %}> Light
+                    </div>
+                    <div class="theme-option {% if system_settings.get('default_theme') == 'dark' %}selected{% endif %}"
+                        data-theme="dark">
+                        <div class="theme-preview theme-dark"></div>
+                        <input type="radio" name="default_theme" value="dark" {% if
+                            system_settings.get('default_theme')=='dark' %}checked{% endif %}> Dark
+                    </div>
+                    <div class="theme-option {% if system_settings.get('default_theme') == 'blue' %}selected{% endif %}"
+                        data-theme="blue">
+                        <div class="theme-preview theme-blue"></div>
+                        <input type="radio" name="default_theme" value="blue" {% if
+                            system_settings.get('default_theme')=='blue' %}checked{% endif %}> Blue
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="maintenance_mode" id="maintenance_mode" {% if
+                    system_settings.get('maintenance_mode') %}checked{% endif %}>
+                <label class="form-check-label" for="maintenance_mode">
+                    Maintenance Mode
+                </label>
+                <small class="form-text text-muted">When enabled, only admins can access the system</small>
+            </div>
+
+            <div class="form-group mt-4">
+                <label class="form-label">Results Publishing</label>
+                <select class="form-control" name="results_publishing">
+                    <option value="manual" {% if system_settings.get('results_publishing', 'manual' )=='manual'
+                        %}selected{% endif %}>
+                        Manual Approval Required
+                    </option>
+                    <option value="auto" {% if system_settings.get('results_publishing')=='auto' %}selected{% endif %}>
+                        Automatic Publishing
+                    </option>
+                    <option value="scheduled" {% if system_settings.get('results_publishing')=='scheduled' %}selected{%
+                        endif %}>
+                        Scheduled Publishing
+                    </option>
+                </select>
+            </div>
+
+            <input type="hidden" name="system_settings" value="true">
+            <button type="submit" class="btn btn-save mt-3">
+                <i class="fas fa-save mr-2"></i>Save System Settings
+            </button>
+        </div>
+
+        <div class="settings-content tab-pane" id="email-tab">
+            <h3 class="mb-4"><i class="fas fa-envelope mr-2"></i>Email Configuration</h3>
+
+            <div class="form-group">
+                <label class="form-label">SMTP Server</label>
+                <input type="text" class="form-control" name="smtp_server"
+                    value="{{ email_settings.get('smtp_server', 'smtp.example.com') }}">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">SMTP Port</label>
+                <input type="number" class="form-control" name="smtp_port"
+                    value="{{ email_settings.get('smtp_port', '587') }}">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">SMTP Username</label>
+                <input type="text" class="form-control" name="smtp_username"
+                    value="{{ email_settings.get('smtp_username', '') }}">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">SMTP Password</label>
+                <input type="password" class="form-control" name="smtp_password"
+                    value="{{ email_settings.get('smtp_password', '') }}">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">From Email Address</label>
+                <input type="email" class="form-control" name="email_from"
+                    value="{{ email_settings.get('email_from', 'noreply@universityx.edu') }}">
+            </div>
+
+            <div class="d-flex align-items-center mt-4">
+                <input type="hidden" name="email_settings" value="true">
+                <button type="submit" class="btn btn-save">
+                    <i class="fas fa-save mr-2"></i>Save Email Settings
+                </button>
+                <button type="button" class="btn test-email-btn" id="test-email-btn">
+                    <i class="fas fa-paper-plane mr-2"></i>Send Test Email
+                </button>
+            </div>
+        </div>
+
+        <div class="settings-content tab-pane" id="security-tab">
+            <h3 class="mb-4"><i class="fas fa-shield-alt mr-2"></i>Security Settings</h3>
+
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="enable_2fa" id="enable_2fa">
+                <label class="form-check-label" for="enable_2fa">
+                    Enable Two-Factor Authentication
+                </label>
+                <small class="form-text text-muted">Require admins to use 2FA for login</small>
+            </div>
+
+            <div class="form-group mt-4">
+                <label class="form-label">Session Timeout</label>
+                <select class="form-control" name="session_timeout">
+                    <option value="30">30 minutes</option>
+                    <option value="60" selected>1 hour</option>
+                    <option value="120">2 hours</option>
+                    <option value="360">6 hours</option>
+                    <option value="1440">24 hours</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Password Policy</label>
+                <select class="form-control" name="password_policy">
+                    <option value="simple">Simple (6+ characters)</option>
+                    <option value="medium" selected>Medium (8+ chars with letters and numbers)</option>
+                    <option value="complex">Complex (12+ chars with mixed case, numbers, and symbols)</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Failed Login Attempts</label>
+                <input type="number" class="form-control" name="failed_attempts" value="5" min="1">
+                <small class="form-text text-muted">Number of failed attempts before account lockout</small>
+            </div>
+
+            <button type="submit" class="btn btn-save mt-3">
+                <i class="fas fa-save mr-2"></i>Save Security Settings
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const tabs = document.querySelectorAll('.settings-tab');
+        tabs.forEach(tab => {
+            tab.addEventListener('click', function () {
+                document.querySelectorAll('.settings-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+
+                this.classList.add('active');
+                const tabId = this.getAttribute('data-tab');
+                document.getElementById(`${tabId}-tab`).classList.add('active');
+            });
+        });
+
+        const themeOptions = document.querySelectorAll('.theme-option');
+        themeOptions.forEach(option => {
+            option.addEventListener('click', function () {
+                themeOptions.forEach(opt => opt.classList.remove('selected'));
+                this.classList.add('selected');
+                this.querySelector('input[type="radio"]').checked = true;
+            });
+        });
+
+        const testEmailBtn = document.getElementById('test-email-btn');
+        if (testEmailBtn) {
+            testEmailBtn.addEventListener('click', function () {
+                const form = document.getElementById('settings-form');
+                const formData = new FormData(form);
+
+                const originalText = testEmailBtn.innerHTML;
+                testEmailBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Sending...';
+                testEmailBtn.disabled = true;
+
+                fetch('{{ url_for("admin.test_email") }}', {
+                    method: 'POST',
+                    body: formData
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert('Test email sent successfully!');
+                        } else {
+                            alert('Error sending test email: ' + (data.message || 'Unknown error'));
+                        }
+                    })
+                    .catch(error => {
+                        alert('Error sending test email: ' + error);
+                    })
+                    .finally(() => {
+                        testEmailBtn.innerHTML = originalText;
+                        testEmailBtn.disabled = false;
+                    });
+            });
+        }
+
+        const form = document.getElementById('settings-form');
+        form.addEventListener('submit', function (e) {
+            let isValid = true;
+
+            const currentTab = document.querySelector('.tab-pane.active');
+
+            if (currentTab.id === 'email-tab') {
+                const requiredFields = currentTab.querySelectorAll('[required]');
+                requiredFields.forEach(field => {
+                    if (!field.value.trim()) {
+                        field.classList.add('is-invalid');
+                        isValid = false;
+                    } else {
+                        field.classList.remove('is-invalid');
+                    }
+                });
+            }
+
+            if (!isValid) {
+                e.preventDefault();
+                alert('Please fill all required fields');
+            }
+        });
+    });
+</script>
+{% endblock %}

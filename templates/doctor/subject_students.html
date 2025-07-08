@@ -1,0 +1,183 @@
+{% extends "doctor/base.html" %}
+
+{% block title %}Students in {{ subject.name }} - Dr. {{ session['user']['name'] }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  .students-container {
+    background: white;
+    border-radius: 8px;
+    padding: 2rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    margin-top: 2rem;
+  }
+
+  .students-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #eee;
+  }
+
+  .students-title {
+    color: #166088;
+    margin: 0;
+  }
+
+  .students-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .student-item {
+    padding: 1rem;
+    border-bottom: 1px solid #eee;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr auto;
+    gap: 1rem;
+    align-items: center;
+  }
+
+  .student-item:last-child {
+    border-bottom: none;
+  }
+
+  .student-item:hover {
+    background-color: rgba(74, 111, 165, 0.05);
+  }
+
+  .student-info {
+    display: contents;
+  }
+
+  .student-name {
+    font-weight: 600;
+    color: #333;
+  }
+
+  .student-email {
+    color: #666;
+    word-break: break-all;
+  }
+
+  .student-id {
+    font-family: monospace;
+    color: #555;
+  }
+
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 1.5rem;
+    color: #4a6fa5;
+    text-decoration: none;
+    font-weight: 600;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 2rem;
+    color: #666;
+  }
+
+  .empty-state i {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    color: #ddd;
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 50px;
+    background-color: #4a6fa5;
+    color: white;
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
+
+  @media (max-width: 768px) {
+    .students-container {
+      padding: 1rem;
+    }
+
+    .student-item {
+      grid-template-columns: 1fr;
+      gap: 0.5rem;
+    }
+
+    .student-actions {
+      grid-column: 1;
+      justify-self: start;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="students-container">
+    <div class="students-header">
+      <h1 class="students-title">Students in {{ subject.name }}</h1>
+      <span class="badge">{{ students|length }} students</span>
+    </div>
+
+    {% if students %}
+    <div class="students-table-header student-item">
+      <div class="student-name">Name</div>
+      <div class="student-email">Email</div>
+      <div class="student-id">University ID</div>
+      <div class="student-actions">Actions</div>
+    </div>
+    <ul class="students-list">
+      {% for student in students %}
+      <li class="student-item">
+        <div class="student-name">{{ student.name }}</div>
+        <div class="student-email">{{ student.email }}</div>
+        <div class="student-id">{{ student.university_id or 'N/A' }}</div>
+        <div class="student-actions">
+          <a href="mailto:{{ student.email }}" class="btn btn-outline">
+            <i class="fas fa-envelope"></i> Email
+          </a>
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <div class="empty-state">
+      <i class="fas fa-user-graduate"></i>
+      <p>No students registered in this subject yet</p>
+    </div>
+    {% endif %}
+
+    <div class="students-footer">
+      <a href="{{ url_for('doctor.dashboard') }}" class="back-link">
+        <i class="fas fa-arrow-left"></i> Back to Dashboard
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const studentItems = document.querySelectorAll('.student-item:not(.students-table-header)');
+    studentItems.forEach(item => {
+      item.style.cursor = 'pointer';
+      item.addEventListener('click', function (e) {
+        if (e.target.tagName === 'A' || e.target.closest('a')) {
+          return;
+        }
+
+        studentItems.forEach(i => i.style.backgroundColor = '');
+        this.style.backgroundColor = 'rgba(74, 111, 165, 0.1)';
+      });
+    });
+  });
+</script>
+{% endblock %}

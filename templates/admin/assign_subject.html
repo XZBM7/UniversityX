@@ -1,0 +1,343 @@
+{% extends "admin/base.html" %}
+
+{% block content %}
+<div class="assignment-container">
+  <div class="assignment-header">
+    <h1 class="assignment-title">
+      <i class="fas fa-user-md"></i> Assign Subject to Doctor
+    </h1>
+    <a href="{{ url_for('admin.dashboard') }}" class="btn btn-back">
+      <i class="fas fa-arrow-left"></i> Back to Dashboard
+    </a>
+  </div>
+
+  <div class="assignment-card">
+    <form method="POST" class="assignment-form">
+      <div class="form-group">
+        <label class="form-label">
+          <i class="fas fa-user-md"></i> Select Doctor
+        </label>
+        <select name="doctor_id" class="form-select" required>
+          <option value="" disabled selected>Choose a doctor</option>
+          {% for doctor in doctors %}
+          <option value="{{ doctor._id }}">{{ doctor.name }}{% if doctor.specialization %} - {{ doctor.specialization
+            }}{% endif %}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">
+          <i class="fas fa-book"></i> Select Subject
+        </label>
+        <select name="subject_id" class="form-select" required>
+          <option value="" disabled selected>Choose a subject</option>
+          {% for subject in subjects %}
+          <option value="{{ subject._id }}">{{ subject.name }} (Stage {{ subject.stage }})</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">
+          <i class="fas fa-link"></i> Assign Subject
+        </button>
+        <button type="reset" class="btn btn-reset">
+          <i class="fas fa-undo"></i> Reset
+        </button>
+      </div>
+    </form>
+  </div>
+
+  {% if existing_assignments %}
+  <div class="assignments-list">
+    <h3><i class="fas fa-list-check"></i> Current Assignments</h3>
+    <div class="assignments-table">
+      {% for assignment in existing_assignments %}
+      <div class="assignment-item">
+        <div class="assignment-details">
+          <span class="doctor-name">{{ assignment.doctor_name }}</span>
+          <i class="fas fa-arrow-right"></i>
+          <span class="subject-name">{{ assignment.subject_name }}</span>
+        </div>
+        <div class="assignment-actions">
+          <a href="{{ url_for('admin.unassign_subject', id=assignment._id) }}" class="btn-action btn-delete"
+            onclick="return confirm('Are you sure you want to remove this assignment?')">
+            <i class="fas fa-unlink"></i> Unassign
+          </a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<style>
+  :root {
+    --primary: #4361ee;
+    --primary-dark: #3a56d4;
+    --secondary: #3f37c9;
+    --success: #4cc9f0;
+    --danger: #f72585;
+    --warning: #f8961e;
+    --info: #4895ef;
+    --light: #f8f9fa;
+    --dark: #212529;
+    --gray: #6c757d;
+    --white: #ffffff;
+  }
+
+  .assignment-container {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+  }
+
+  .assignment-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .assignment-title {
+    font-size: 1.8rem;
+    color: var(--dark);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .assignment-title i {
+    color: var(--primary);
+  }
+
+  .assignment-card {
+    background-color: var(--white);
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    padding: 2rem;
+    margin-bottom: 2rem;
+  }
+
+  .form-group {
+    margin-bottom: 1.5rem;
+  }
+
+  .form-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: var(--dark);
+  }
+
+  .form-label i {
+    margin-right: 8px;
+    color: var(--primary);
+  }
+
+  .form-select {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    background-size: 1rem;
+  }
+
+  .form-select:focus {
+    border-color: var(--primary);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+  }
+
+  .form-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+  }
+
+  .assignments-list {
+    background-color: var(--white);
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    padding: 2rem;
+  }
+
+  .assignments-list h3 {
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: var(--dark);
+  }
+
+  .assignment-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  }
+
+  .assignment-item:last-child {
+    border-bottom: none;
+  }
+
+  .assignment-details {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .doctor-name {
+    font-weight: 500;
+  }
+
+  .subject-name {
+    color: var(--primary);
+    font-weight: 500;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    border: none;
+    cursor: pointer;
+    font-size: 0.95rem;
+  }
+
+  .btn i {
+    font-size: 0.9rem;
+  }
+
+  .btn-primary {
+    background-color: var(--primary);
+    color: var(--white);
+  }
+
+  .btn-primary:hover {
+    background-color: var(--primary-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(67, 97, 238, 0.2);
+  }
+
+  .btn-secondary {
+    background-color: var(--light);
+    color: var(--dark);
+  }
+
+  .btn-secondary:hover {
+    background-color: #e9ecef;
+  }
+
+  .btn-back {
+    background-color: var(--light);
+    color: var(--dark);
+  }
+
+  .btn-back:hover {
+    background-color: #e9ecef;
+  }
+
+  .btn-reset {
+    background-color: var(--light);
+    color: var(--dark);
+  }
+
+  .btn-reset:hover {
+    background-color: #e9ecef;
+  }
+
+  .btn-action {
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+    transition: all 0.2s ease;
+  }
+
+  .btn-delete {
+    background-color: rgba(247, 37, 133, 0.1);
+    color: var(--danger);
+    border: 1px solid rgba(247, 37, 133, 0.3);
+  }
+
+  .btn-delete:hover {
+    background-color: rgba(247, 37, 133, 0.2);
+  }
+
+  @media (max-width: 768px) {
+    .assignment-header {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .form-actions {
+      flex-direction: column;
+    }
+
+    .assignment-item {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+
+    .assignment-actions {
+      width: 100%;
+    }
+
+    .btn-action {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+</style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const formCard = document.querySelector('.assignment-card');
+    formCard.style.opacity = '0';
+    formCard.style.transform = 'translateY(20px)';
+    formCard.style.animation = 'fadeInUp 0.4s ease forwards';
+
+    const assignmentsList = document.querySelector('.assignments-list');
+    if (assignmentsList) {
+      assignmentsList.style.opacity = '0';
+      assignmentsList.style.transform = 'translateY(20px)';
+      assignmentsList.style.animation = 'fadeInUp 0.4s ease forwards 0.2s';
+    }
+
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+    `;
+    document.head.appendChild(style);
+  });
+</script>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+{% endblock %}

@@ -1,0 +1,299 @@
+{% extends "doctor/base.html" %}
+
+{% block title %}My Profile - Dr. {{ session['user']['name'] }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  .profile-container {
+    background: white;
+    border-radius: 8px;
+    padding: 2rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    margin: 2rem auto;
+    max-width: 800px;
+  }
+
+  .profile-header {
+    text-align: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #eee;
+  }
+
+  .profile-title {
+    color: #166088;
+    margin-bottom: 0.5rem;
+  }
+
+  .profile-content {
+    display: flex;
+    gap: 2rem;
+  }
+
+  .profile-picture-section {
+    flex: 1;
+    max-width: 300px;
+    text-align: center;
+  }
+
+  .profile-details {
+    flex: 2;
+  }
+
+  .profile-picture {
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid #4a6fa5;
+    margin-bottom: 1rem;
+  }
+
+  .upload-btn {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    background-color: #4a6fa5;
+    color: white;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+
+  .upload-btn:hover {
+    background-color: #3a5a80;
+  }
+
+  #file-input {
+    display: none;
+  }
+
+  .form-group {
+    margin-bottom: 1.5rem;
+  }
+
+  .form-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #333;
+  }
+
+  .form-control {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 1rem;
+    transition: border-color 0.3s ease;
+  }
+
+  .form-control:focus {
+    outline: none;
+    border-color: #4a6fa5;
+    box-shadow: 0 0 0 2px rgba(74, 111, 165, 0.2);
+  }
+
+  .readonly-field {
+    background-color: #f8f9fa;
+    color: #666;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: none;
+  }
+
+  .btn-primary {
+    background-color: #4a6fa5;
+    color: white;
+  }
+
+  .btn-primary:hover {
+    background-color: #3a5a80;
+  }
+
+  .form-actions {
+    margin-top: 2rem;
+    text-align: right;
+  }
+
+  .profile-info-item {
+    margin-bottom: 1rem;
+  }
+
+  .profile-info-label {
+    font-weight: 600;
+    color: #333;
+  }
+
+  .profile-info-value {
+    color: #666;
+  }
+
+  @media (max-width: 768px) {
+    .profile-content {
+      flex-direction: column;
+    }
+
+    .profile-picture-section {
+      max-width: 100%;
+    }
+  }
+
+  .flash-messages .alert {
+    padding: 0.8rem 1rem;
+    margin-bottom: 1rem;
+    border-radius: 6px;
+    font-weight: 600;
+  }
+
+  .alert-danger {
+    background-color: #f8d7da;
+    color: #842029;
+  }
+
+  .alert-success {
+    background-color: #d1e7dd;
+    color: #0f5132;
+  }
+
+  .alert-info {
+    background-color: #cff4fc;
+    color: #055160;
+  }
+
+  @media (max-width: 768px) {
+    .profile-content {
+      flex-direction: column;
+    }
+
+    .profile-picture-section {
+      max-width: 100%;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="profile-container">
+    <div class="profile-header">
+      <h1 class="profile-title">My Profile</h1>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="flash-messages">
+      {% for category, message in messages %}
+      <div class="alert alert-{{ category }}">
+        {{ message }}
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    <form method="POST" enctype="multipart/form-data">
+      <div class="profile-content">
+        <div class="profile-picture-section">
+          <img src="{{ url_for('static', filename='uploads/profiles/' + (user.profile_pic or 'default_doctor.png')) }}"
+            class="profile-picture" id="profile-preview">
+          <label for="file-input" class="upload-btn">
+            <i class="fas fa-camera"></i> Change Photo
+          </label>
+          <input type="file" id="file-input" name="profile_pic" accept="image/*">
+        </div>
+
+        <div class="profile-details">
+          <div class="form-group">
+            <label class="form-label">Email</label>
+            <input type="email" class="form-control readonly-field" value="{{ user.email }}" readonly>
+          </div>
+
+          <div class="form-group">
+            <label for="name" class="form-label">Full Name</label>
+            <input type="text" id="name" name="name" class="form-control" value="{{ user.name }}" required>
+          </div>
+
+
+
+          <div class="form-group">
+            <label for="current_password" class="form-label">Current Password</label>
+            <input type="password" id="current_password" name="current_password" class="form-control"
+              placeholder="Enter current password">
+          </div>
+
+          <div class="form-group">
+            <label for="new_password" class="form-label">New Password</label>
+            <input type="password" id="new_password" name="new_password" class="form-control"
+              placeholder="Leave blank to keep current">
+          </div>
+
+          <div class="form-group">
+            <label for="confirm_password" class="form-label">Confirm New Password</label>
+            <input type="password" id="confirm_password" name="confirm_password" class="form-control"
+              placeholder="Confirm new password">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <a href="{{ url_for('doctor.dashboard') }}" class="btn btn-outline">
+          <i class="fas fa-arrow-left"></i> Cancel
+        </a>
+        <button type="submit" class="btn btn-primary">
+          <i class="fas fa-save"></i> Save Changes
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const fileInput = document.getElementById('file-input');
+    const profilePreview = document.getElementById('profile-preview');
+
+    fileInput.addEventListener('change', function () {
+      const file = this.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          profilePreview.src = e.target.result;
+        }
+        reader.readAsDataURL(file);
+      }
+    });
+
+    const form = document.querySelector('form');
+    form.addEventListener('submit', function (e) {
+      const newPassword = document.getElementById('new_password').value;
+      const confirmPassword = document.getElementById('confirm_password').value;
+      const currentPassword = document.getElementById('current_password').value;
+
+      if (newPassword && newPassword !== confirmPassword) {
+        e.preventDefault();
+        alert('New passwords do not match!');
+        return false;
+      }
+
+      if ((newPassword || document.getElementById('name').value !== '{{ user.name }}') && !currentPassword) {
+        e.preventDefault();
+        alert('Please enter your current password to confirm changes');
+        return false;
+      }
+
+      return true;
+    });
+  });
+</script>
+{% endblock %}

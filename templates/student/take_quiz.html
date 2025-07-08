@@ -1,0 +1,223 @@
+{% extends "student/base.html" %}
+
+{% block content %}
+<div class="quiz-container">
+  <div class="quiz-header">
+    <h1 class="quiz-title">{{ quiz.title }}</h1>
+    <div class="quiz-meta">
+      <span class="questions-count">{{ quiz.questions|length }} Questions</span>
+      <span class="quiz-subject">{{ quiz.subject_name }}</span>
+    </div>
+  </div>
+
+  <form method="POST" class="quiz-form">
+    {% for question in quiz.questions %}
+    {% set question_index = loop.index0 %}
+    <div class="question-card">
+      <div class="question-header">
+        <span class="question-number">Question {{ loop.index }}</span>
+      </div>
+      <div class="question-body">
+        <p class="question-text">{{ question.text }}</p>
+
+        <div class="options-list">
+          {% for option in question.options %}
+          <div class="option-item">
+            <input type="radio" id="q{{ question_index }}_o{{ loop.index0 }}" name="answer_{{ question_index }}"
+              value="{{ option }}" required class="option-input">
+            <label for="q{{ question_index }}_o{{ loop.index0 }}" class="option-label">
+              <span class="option-text">{{ option }}</span>
+            </label>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+
+    <div class="quiz-actions">
+      <button type="submit" class="submit-btn">
+        Submit Answers
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+          <path fill-rule="evenodd"
+            d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8z" />
+        </svg>
+      </button>
+      <a href="{{ url_for('student.quizzes') }}" class="back-link">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+          <path fill-rule="evenodd"
+            d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z" />
+        </svg>
+        Back to Quizzes
+      </a>
+    </div>
+  </form>
+</div>
+
+<style>
+  :root {
+    --primary-color: #4361ee;
+    --primary-hover: #3a56d4;
+    --text-color: #2b2d42;
+    --light-gray: #f8f9fa;
+    --border-color: #e9ecef;
+    --correct-color: #4cc9f0;
+    --incorrect-color: #f72585;
+    --radius: 8px;
+    --shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  }
+
+  .quiz-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem;
+  }
+
+  .quiz-header {
+    margin-bottom: 2rem;
+    text-align: center;
+  }
+
+  .quiz-title {
+    color: var(--text-color);
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .quiz-meta {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    color: #6c757d;
+    font-size: 0.9rem;
+  }
+
+  .quiz-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .question-card {
+    background: white;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    border-left: 4px solid var(--primary-color);
+  }
+
+  .question-header {
+    padding: 0.75rem 1.25rem;
+    background-color: var(--light-gray);
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .question-number {
+    font-weight: 600;
+    color: var(--primary-color);
+  }
+
+  .question-body {
+    padding: 1.25rem;
+  }
+
+  .question-text {
+    font-weight: 500;
+    margin-bottom: 1rem;
+    color: var(--text-color);
+    font-size: 1.1rem;
+  }
+
+  .options-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .option-item {
+    display: flex;
+    align-items: center;
+  }
+
+  .option-input {
+    margin-right: 0.75rem;
+    width: 1.1em;
+    height: 1.1em;
+  }
+
+  .option-label {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem;
+    border-radius: var(--radius);
+    transition: all 0.2s ease;
+    width: 100%;
+    cursor: pointer;
+  }
+
+  .option-input:checked+.option-label {
+    background-color: rgba(67, 97, 238, 0.1);
+    font-weight: 500;
+  }
+
+  .option-label:hover {
+    background-color: rgba(0, 0, 0, 0.03);
+  }
+
+  .quiz-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 2rem;
+  }
+
+  .submit-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--radius);
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+
+  .submit-btn:hover {
+    background-color: var(--primary-hover);
+  }
+
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s ease;
+  }
+
+  .back-link:hover {
+    color: var(--primary-hover);
+    text-decoration: underline;
+  }
+
+  @media (max-width: 768px) {
+    .quiz-container {
+      padding: 1rem;
+    }
+
+    .quiz-title {
+      font-size: 1.5rem;
+    }
+
+    .quiz-actions {
+      flex-direction: column-reverse;
+      gap: 1rem;
+      align-items: flex-start;
+    }
+  }
+</style>
+{% endblock %}

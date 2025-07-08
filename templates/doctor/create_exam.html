@@ -1,0 +1,180 @@
+{% extends "layout.html" %}
+
+{% block title %}Create Exam{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4>Create New Exam for {{ course.name }}</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('doctor.create_exam', course_id=course._id) }}">
+                    <div class="mb-3">
+                        <label for="title" class="form-label">Exam Title</label>
+                        <input type="text" class="form-control" id="title" name="title" required>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="start_time" class="form-label">Start Time</label>
+                            <input type="datetime-local" class="form-control" id="start_time" name="start_time"
+                                required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="duration" class="form-label">Duration (minutes)</label>
+                            <input type="number" class="form-control" id="duration" name="duration" min="1" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="instructions" class="form-label">Instructions</label>
+                        <textarea class="form-control" id="instructions" name="instructions" rows="3"
+                            required></textarea>
+                    </div>
+
+                    <div id="questions-container">
+                        <div class="question-card card mb-3">
+                            <div class="card-header d-flex justify-content-between align-items-center bg-light">
+                                <h5 class="mb-0">Question 1</h5>
+                                <button type="button" class="btn btn-sm btn-danger remove-question">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label class="form-label">Question Text</label>
+                                    <input type="text" class="form-control" name="questions[0][text]" required>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Question Type</label>
+                                    <select class="form-select question-type" name="questions[0][type]" required>
+                                        <option value="multiple_choice">Multiple Choice</option>
+                                        <option value="true_false">True/False</option>
+                                        <option value="short_answer">Short Answer</option>
+                                        <option value="essay">Essay</option>
+                                    </select>
+                                </div>
+
+                                <div class="options-container">
+                                    <div class="mb-3">
+                                        <label class="form-label">Options (for multiple choice)</label>
+                                        <div class="input-group mb-2">
+                                            <input type="text" class="form-control"
+                                                name="questions[0][options][0][text]" placeholder="Option text">
+                                            <div class="input-group-text">
+                                                <input class="form-check-input mt-0" type="radio"
+                                                    name="questions[0][correct_answer]" value="0" checked>
+                                            </div>
+                                        </div>
+                                        <div class="input-group mb-2">
+                                            <input type="text" class="form-control"
+                                                name="questions[0][options][1][text]" placeholder="Option text">
+                                            <div class="input-group-text">
+                                                <input class="form-check-input mt-0" type="radio"
+                                                    name="questions[0][correct_answer]" value="1">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Points</label>
+                                    <input type="number" class="form-control" name="questions[0][points]" min="1"
+                                        value="1" required>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end mb-4">
+                        <button type="button" id="add-question" class="btn btn-secondary">
+                            <i class="fas fa-plus"></i> Add Question
+                        </button>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">Create Exam</button>
+                        <a href="{{ url_for('doctor.view_course', course_id=course._id) }}"
+                            class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        let questionCount = 1;
+
+        document.getElementById('add-question').addEventListener('click', function () {
+            questionCount++;
+            const newQuestion = document.querySelector('.question-card').cloneNode(true);
+
+            const questionElements = newQuestion.querySelectorAll('[name^="questions[0]"]');
+            questionElements.forEach(el => {
+                const name = el.getAttribute('name').replace('[0]', `[${questionCount - 1}]`);
+                el.setAttribute('name', name);
+            });
+
+            newQuestion.querySelector('.card-header h5').textContent = `Question ${questionCount}`;
+
+            newQuestion.querySelectorAll('input[type="text"], input[type="number"], textarea').forEach(el => {
+                if (el.type !== 'radio') el.value = '';
+            });
+
+            document.getElementById('questions-container').appendChild(newQuestion);
+        });
+
+        document.addEventListener('click', function (e) {
+            if (e.target.classList.contains('remove-question') || e.target.closest('.remove-question')) {
+                if (document.querySelectorAll('.question-card').length > 1) {
+                    e.target.closest('.question-card').remove();
+                    document.querySelectorAll('.question-card').forEach((card, index) => {
+                        card.querySelector('.card-header h5').textContent = `Question ${index + 1}`;
+                    });
+                    questionCount--;
+                } else {
+                    alert('You must have at least one question');
+                }
+            }
+        });
+
+        document.addEventListener('change', function (e) {
+            if (e.target.classList.contains('question-type')) {
+                const optionsContainer = e.target.closest('.card-body').querySelector('.options-container');
+                const questionType = e.target.value;
+
+                if (questionType === 'multiple_choice') {
+                    optionsContainer.innerHTML = `
+                        <div class="mb-3">
+                            <label class="form-label">Options (for multiple choice)</label>
+                            <div class="input-group mb-2">
+                                <input type="text" class="form-control" name="${e.target.name.replace('[type]', '[options][0][text]')}" placeholder="Option text">
+                                <div class="input-group-text">
+                                    <input class="form-check-input mt-0" type="radio" name="${e.target.name.replace('[type]', '[correct_answer]')}" value="0" checked>
+                                </div>
+                            </div>
+                            <div class="input-group mb-2">
+                                <input type="text" class="form-control" name="${e.target.name.replace('[type]', '[options][1][text]')}" placeholder="Option text">
+                                <div class="input-group-text">
+                                    <input class="form-check-input mt-0" type="radio" name="${e.target.name.replace('[type]', '[correct_answer]')}" value="1">
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else if (questionType === 'true_false') {
+                    optionsContainer.innerHTML = '';
+                } else {
+                    optionsContainer.innerHTML = '';
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

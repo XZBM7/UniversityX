@@ -1,0 +1,427 @@
+{% extends "admin/base.html" %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="dashboard-header">
+        <h1 class="dashboard-title">
+            <i class="fas fa-tachometer-alt"></i> Admin Dashboard
+        </h1>
+        <div class="user-info">
+            <span class="welcome-msg">Welcome, {{ user.name if user else 'Admin' }}</span>
+        </div>
+    </div>
+
+    <div class="stats-container">
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-user-graduate"></i>
+            </div>
+            <div class="stat-content">
+                <span class="stat-value">{{ total_students }}</span>
+                <span class="stat-label">Students</span>
+            </div>
+            <a href="{{ url_for('admin.list_students') }}" class="stat-link">
+                <i class="fas fa-arrow-right"></i>
+            </a>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-user-md"></i>
+            </div>
+            <div class="stat-content">
+                <span class="stat-value">{{ total_doctors }}</span>
+                <span class="stat-label">Doctors</span>
+            </div>
+            <a href="{{ url_for('admin.list_doctors') }}" class="stat-link">
+                <i class="fas fa-arrow-right"></i>
+            </a>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-book"></i>
+            </div>
+            <div class="stat-content">
+                <span class="stat-value">{{ total_subjects }}</span>
+                <span class="stat-label">Subjects</span>
+            </div>
+            <a href="{{ url_for('admin.list_subjects') }}" class="stat-link">
+                <i class="fas fa-arrow-right"></i>
+            </a>
+        </div>
+    </div>
+
+    <div class="quick-actions">
+        <h2><i class="fas fa-bolt"></i> Quick Actions</h2>
+        <div class="action-grid">
+            <a href="{{ url_for('admin.list_students') }}" class="action-card">
+                <div class="action-icon">
+                    <i class="fas fa-user-graduate"></i>
+                </div>
+                <span class="action-text">Manage Students</span>
+            </a>
+
+            <a href="{{ url_for('admin.list_doctors') }}" class="action-card">
+                <div class="action-icon">
+                    <i class="fas fa-user-md"></i>
+                </div>
+                <span class="action-text">Manage Doctors</span>
+            </a>
+
+            <a href="{{ url_for('admin.list_subjects') }}" class="action-card">
+                <div class="action-icon">
+                    <i class="fas fa-book"></i>
+                </div>
+                <span class="action-text">Manage Subjects</span>
+            </a>
+
+            <a href="{{ url_for('admin.list_admins') }}" class="action-card">
+                <div class="action-icon">
+                    <i class="fas fa-user-shield"></i>
+                </div>
+                <span class="action-text"> Manage Administrators</span>
+            </a>
+
+            <a href="{{ url_for('admin.list_majors') }}" class="action-card">
+    <div class="action-icon">
+        <i class="fas fa-graduation-cap"></i>  
+    </div>
+    <span class="action-text">Manage Majors</span>
+</a>
+
+
+            <a href="{{ url_for('admin.list_schedules') }}" class="action-card">
+                <div class="action-icon">
+                    <i class="fas fa-calendar-alt"></i>
+                </div>
+                <span class="action-text">Manage Schedules</span>
+            </a>
+
+            <a href="{{ url_for('admin.assign_subject_to_doctor') }}" class="action-card">
+                <div class="action-icon">
+                    <i class="fas fa-link"></i>
+                </div>
+                <span class="action-text">Assign Subjects</span>
+            </a>
+
+            <a href="{{ url_for('admin.list_grades') }}" class="action-card">
+                <div class="action-icon">
+                    <i class="fas fa-star"></i>
+                </div>
+                <span class="action-text">Manage Grades</span>
+            </a>
+
+            <a href="{{ url_for('admin.publish_grades') }}" class="action-card">
+                <div class="action-icon">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                </div>
+                <span class="action-text">Publish Grades</span>
+            </a>
+
+            <a href="{{ url_for('admin.manage_complaints') }}" class="action-card">
+                <div class="action-icon">
+                    <i class="fas fa-bug"></i>
+                </div>
+                <span class="action-text">Manage Complaints</span>
+            </a>
+
+
+            <a href="{{ url_for('admin.manage_fees') }}" class="action-card">
+                <div class="action-icon">
+                    <i class="fas fa-dollar-sign"></i>
+                </div>
+                <span class="action-text">Manage Fees</span>
+            </a>
+
+            <a href="{{ url_for('admin.students_statistics') }}" class="action-card">
+                <div class="action-icon">
+                    <i class="fas fa-chart-bar"></i>
+                </div>
+                <span class="action-text">Students Statistics</span>
+            </a>
+
+
+
+            <a href="{{ url_for('admin.list_exam_rooms') }}" class="action-card">
+                <div class="action-icon">
+                    <i class="fas fa-door-open"></i>
+                </div>
+                <span class="action-text">Exam Rooms</span>
+            </a>
+
+        </div>
+    </div>
+</div>
+
+<style>
+    :root {
+        --primary: #4361ee;
+        --primary-dark: #3a56d4;
+        --secondary: #3f37c9;
+        --success: #4cc9f0;
+        --danger: #f72585;
+        --warning: #f8961e;
+        --info: #4895ef;
+        --light: #f8f9fa;
+        --dark: #212529;
+        --gray: #6c757d;
+        --white: #ffffff;
+    }
+
+    .dashboard-container {
+        max-width: 1200px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+    }
+
+    .dashboard-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .dashboard-title {
+        font-size: 2rem;
+        color: var(--dark);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .dashboard-title i {
+        color: var(--primary);
+    }
+
+    .user-info {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .welcome-msg {
+        font-weight: 500;
+        color: var(--dark);
+    }
+
+    .btn-logout {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        background-color: rgba(247, 37, 133, 0.1);
+        color: var(--danger);
+        border-radius: 6px;
+        text-decoration: none;
+        transition: all 0.2s ease;
+    }
+
+    .btn-logout:hover {
+        background-color: rgba(247, 37, 133, 0.2);
+    }
+
+    .stats-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 3rem;
+    }
+
+    .stat-card {
+        background-color: var(--white);
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        padding: 1.5rem;
+        display: flex;
+        align-items: center;
+        transition: all 0.3s ease;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 6px 25px rgba(0, 0, 0, 0.12);
+    }
+
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        background-color: rgba(67, 97, 238, 0.1);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1.5rem;
+    }
+
+    .stat-icon i {
+        font-size: 1.5rem;
+        color: var(--primary);
+    }
+
+    .stat-content {
+        flex: 1;
+    }
+
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--dark);
+        display: block;
+        line-height: 1;
+    }
+
+    .stat-label {
+        font-size: 1rem;
+        color: var(--gray);
+    }
+
+    .stat-link {
+        width: 40px;
+        height: 40px;
+        background-color: rgba(67, 97, 238, 0.1);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+    }
+
+    .stat-link:hover {
+        background-color: var(--primary);
+        color: var(--white);
+    }
+
+    .quick-actions h2 {
+        font-size: 1.5rem;
+        color: var(--dark);
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .quick-actions h2 i {
+        color: var(--primary);
+    }
+
+    .action-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .action-card {
+        background-color: var(--white);
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        padding: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+
+    .action-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+        background-color: var(--primary);
+    }
+
+    .action-card:hover .action-icon {
+        background-color: var(--white);
+    }
+
+    .action-card:hover .action-icon i {
+        color: var(--primary);
+    }
+
+    .action-card:hover .action-text {
+        color: var(--white);
+    }
+
+    .action-icon {
+        width: 60px;
+        height: 60px;
+        background-color: rgba(67, 97, 238, 0.1);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .action-icon i {
+        font-size: 1.5rem;
+        color: var(--primary);
+        transition: all 0.3s ease;
+    }
+
+    .action-text {
+        font-weight: 500;
+        color: var(--dark);
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+
+    @media (max-width: 768px) {
+        .dashboard-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .user-info {
+            width: 100%;
+            justify-content: space-between;
+        }
+
+        .stats-container {
+            grid-template-columns: 1fr;
+        }
+
+        .action-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @media (max-width: 480px) {
+        .action-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const statCards = document.querySelectorAll('.stat-card');
+        statCards.forEach((card, index) => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(20px)';
+            card.style.animation = `fadeInUp 0.4s ease forwards ${index * 0.1}s`;
+        });
+
+        const actionCards = document.querySelectorAll('.action-card');
+        actionCards.forEach((card, index) => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(20px)';
+            card.style.animation = `fadeInUp 0.4s ease forwards ${index * 0.05 + 0.3}s`;
+        });
+
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fadeInUp {
+                from { opacity: 0; transform: translateY(20px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+        `;
+        document.head.appendChild(style);
+    });
+</script>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+{% endblock %}

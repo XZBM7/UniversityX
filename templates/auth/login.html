@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login</title>
+    <style>
+        :root {
+            --primary: #4361ee;
+            --primary-dark: #3a0ca3;
+            --secondary: #f72585;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --success: #4cc9f0;
+            --danger: #ef233c;
+            --warning: #f8961e;
+            --info: #4895ef;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .flash-messages {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            max-width: 350px;
+        }
+
+        .flash-messages ul {
+            list-style: none;
+        }
+
+        .flash-messages li {
+            padding: 15px 20px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            color: white;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            animation: slideIn 0.3s ease-out;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .flash-messages li::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 5px;
+            height: 100%;
+        }
+
+        .flash-danger {
+            background-color: var(--danger);
+        }
+
+        .flash-success {
+            background-color: var(--success);
+        }
+
+        .flash-warning {
+            background-color: var(--warning);
+        }
+
+        .flash-info {
+            background-color: var(--info);
+        }
+
+        .flash-danger::after {
+            background-color: #d00000;
+        }
+
+        .flash-success::after {
+            background-color: #38b000;
+        }
+
+        .flash-warning::after {
+            background-color: #e85d04;
+        }
+
+        .flash-info::after {
+            background-color: #1a759f;
+        }
+
+        .login-container {
+            background-color: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 450px;
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+
+        .login-container:hover {
+            transform: translateY(-5px);
+        }
+
+        .login-header {
+            background: linear-gradient(to right, var(--primary), var(--primary-dark));
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .login-header h1 {
+            font-size: 2rem;
+            margin-bottom: 5px;
+        }
+
+        .login-header p {
+            opacity: 0.8;
+            font-size: 0.9rem;
+        }
+
+        .login-form {
+            padding: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+        }
+
+        .form-control.error {
+            border-color: var(--danger);
+        }
+
+        .form-control.success {
+            border-color: var(--success);
+        }
+
+        .error-message {
+            color: var(--danger);
+            font-size: 0.8rem;
+            margin-top: 5px;
+            display: none;
+        }
+
+        .btn {
+            display: inline-block;
+            background: linear-gradient(to right, var(--primary), var(--primary-dark));
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+        }
+
+        .btn:hover {
+            background: linear-gradient(to right, var(--primary-dark), var(--primary));
+            box-shadow: 0 5px 15px rgba(67, 97, 238, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .login-footer {
+            text-align: center;
+            padding: 0 30px 30px;
+            color: #6c757d;
+        }
+
+        .login-footer a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .login-footer a:hover {
+            text-decoration: underline;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes shake {
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            20%,
+            60% {
+                transform: translateX(-5px);
+            }
+
+            40%,
+            80% {
+                transform: translateX(5px);
+            }
+        }
+
+        .shake {
+            animation: shake 0.4s ease-in-out;
+        }
+
+        @media (max-width: 576px) {
+            .login-header {
+                padding: 20px;
+            }
+
+            .login-header h1 {
+                font-size: 1.5rem;
+            }
+
+            .login-form {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="login-container">
+        <div class="login-header">
+            <h1>Welcome Back</h1>
+            <p>Please login with your credentials</p>
+        </div>
+
+        <div class="login-form">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            <div class="flash-messages">
+                <ul>
+                    {% for category, message in messages %}
+                    <li class="flash-{{ category }}">
+                        {{ message }}
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+            {% endwith %}
+
+            <form id="loginForm" method="POST" action="{{ url_for('auth.login') }}" novalidate>
+                <div class="form-group">
+                    <label for="username">Email or User ID</label>
+                    <input type="text" id="username" name="username" class="form-control"
+                        placeholder="Enter your email or user ID" required>
+                    <span class="error-message" id="username-error">Please enter a valid email or user ID</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" class="form-control"
+                        placeholder="Enter your password" required minlength="6">
+                    <span class="error-message" id="password-error">Password must be at least 6 characters</span>
+                </div>
+
+                <button type="submit" class="btn">Login</button>
+            </form>
+        </div>
+
+        <div class="login-footer">
+            <p><a href="#">Forgot password?</a></p>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const form = document.getElementById('loginForm');
+            const usernameInput = document.getElementById('username');
+            const passwordInput = document.getElementById('password');
+            const usernameError = document.getElementById('username-error');
+            const passwordError = document.getElementById('password-error');
+
+            const flashMessages = document.querySelectorAll('.flash-messages li');
+            flashMessages.forEach(message => {
+                setTimeout(() => {
+                    message.style.opacity = '0';
+                    setTimeout(() => message.remove(), 300);
+                }, 5000);
+            });
+
+            // // Email/ID validation pattern
+            // function isValidEmailOrId(input) {
+            //     // Check for email pattern or MongoDB ObjectId pattern (24 hex chars)
+            //     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            //     const idPattern = /^[0-9a-fA-F]{24}$/;
+            //     return emailPattern.test(input) || idPattern.test(input);
+            // }
+
+            usernameInput.addEventListener('input', () => {
+                if (isValidEmailOrId(usernameInput.value.trim())) {
+                    usernameInput.classList.remove('error');
+                    usernameInput.classList.add('success');
+                    usernameError.style.display = 'none';
+                } else {
+                    usernameInput.classList.remove('success');
+                }
+            });
+
+            passwordInput.addEventListener('input', () => {
+                if (passwordInput.validity.valid) {
+                    passwordInput.classList.remove('error');
+                    passwordInput.classList.add('success');
+                    passwordError.style.display = 'none';
+                } else {
+                    passwordInput.classList.remove('success');
+                }
+            });
+
+            form.addEventListener('submit', function (e) {
+                let isValid = true;
+
+                if (usernameInput.value.trim() === '') {
+                    usernameInput.classList.add('error');
+                    usernameError.style.display = 'block';
+                    usernameError.textContent = 'Email or User ID is required';
+                    isValid = false;
+                } else if (!isValidEmailOrId(usernameInput.value.trim())) {
+                    usernameInput.classList.add('error');
+                    usernameError.style.display = 'block';
+                    usernameError.textContent = 'Please enter a valid email or user ID';
+                    isValid = false;
+                }
+
+                if (!passwordInput.validity.valid) {
+                    passwordInput.classList.add('error');
+                    passwordError.style.display = 'block';
+
+                    if (passwordInput.value.length < 6) {
+                        passwordError.textContent = 'Password must be at least 6 characters';
+                    } else {
+                        passwordError.textContent = 'Password is required';
+                    }
+
+                    isValid = false;
+                }
+
+                if (!isValid) {
+                    e.preventDefault();
+                    form.classList.add('shake');
+                    setTimeout(() => form.classList.remove('shake'), 500);
+                }
+            });
+
+            usernameInput.addEventListener('blur', () => {
+                if (usernameInput.value.trim() === '') {
+                    usernameInput.classList.add('error');
+                    usernameError.style.display = 'block';
+                    usernameError.textContent = 'Email or User ID is required';
+                } else if (!isValidEmailOrId(usernameInput.value.trim())) {
+                    usernameInput.classList.add('error');
+                    usernameError.style.display = 'block';
+                    usernameError.textContent = 'Please enter a valid email or user ID';
+                }
+            });
+
+            passwordInput.addEventListener('blur', () => {
+                if (!passwordInput.validity.valid) {
+                    passwordInput.classList.add('error');
+                    passwordError.style.display = 'block';
+
+                    if (passwordInput.value.length < 6) {
+                        passwordError.textContent = 'Password must be at least 6 characters';
+                    } else {
+                        passwordError.textContent = 'Password is required';
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>

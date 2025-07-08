@@ -1,0 +1,571 @@
+{% extends "student/base.html" %}
+
+{% block content %}
+<div class="exam-container">
+  <div class="card fade-in">
+    <div class="exam-header">
+      <h1><i class="fas fa-clipboard-list"></i> Your Exam Schedule</h1>
+      <div class="exam-actions">
+        <div class="days-remaining">
+          <i class="fas fa-calendar-day"></i>
+          <span id="nextExamDays">0</span> days until next exam
+        </div>
+        <button class="btn btn-print" onclick="window.print()">
+          <i class="fas fa-print"></i> Print
+        </button>
+      </div>
+    </div>
+
+    <div class="exam-alert">
+      <i class="fas fa-exclamation-circle"></i>
+      <span>Remember to bring your student ID to all exams</span>
+    </div>
+
+    <div class="table-responsive">
+      <table class="exam-table">
+        <thead>
+          <tr>
+            <th><i class="fas fa-book"></i> Subject</th>
+            <th><i class="fas fa-door-open"></i> Room</th>
+            <th><i class="fas fa-calendar-alt"></i> Date</th>
+            <th><i class="fas fa-clock"></i> Time</th>
+            <!-- <th><i class="fas fa-map-marked-alt"></i> Location</th> -->
+            <th><i class="fas fa-info-circle"></i> Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for room in rooms %}
+          <tr class="exam-row" data-exam-date="{{ room.formatted_date }}">
+            <td>{{ room.subject_name }}</td>
+            <td>{{ room.room }}</td>
+            <td>{{ room.formatted_date }} ({{ room.day }})</td>
+            <td>{{ room.time }}</td>
+            <!-- <td>
+      <button class="btn-location" onclick="showOnMap('{{ room.room }}')">
+        <i class="fas fa-map-pin"></i> View Map
+      </button>
+    </td> -->
+            <td>
+              <span class="exam-status upcoming">
+                <i class="fas fa-hourglass-half"></i> Upcoming
+              </span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+
+      </table>
+    </div>
+
+    <div class="exam-notes">
+      <h3><i class="fas fa-sticky-note"></i> Exam Guidelines</h3>
+      <ul>
+        <li>Arrive at least 15 minutes before exam start time</li>
+        <li>Bring your student ID and required materials</li>
+        <li>Electronic devices must be turned off during exams</li>
+        <li>Follow all instructions from exam proctors</li>
+      </ul>
+    </div>
+
+    <a href="{{ url_for('student.dashboard') }}" class="btn btn-back">
+      <i class="fas fa-arrow-left"></i> Back to Dashboard
+    </a>
+  </div>
+</div>
+
+<div id="mapModal" class="modal">
+  <div class="modal-content">
+    <span class="close-btn">&times;</span>
+    <h3 id="mapLocationTitle">Campus Map</h3>
+    <div class="map-placeholder">
+      <i class="fas fa-map-marked-alt"></i>
+      <p>Map view of <span id="mapRoomName"></span> would display here</p>
+    </div>
+    <button class="btn btn-directions">
+      <i class="fas fa-route"></i> Get Directions
+    </button>
+  </div>
+</div>
+
+<style>
+  :root {
+    --primary-color: #4361ee;
+    --secondary-color: #3f37c9;
+    --success-color: #4cc9f0;
+    --warning-color: #f8961e;
+    --danger-color: #f94144;
+    --light-color: #f8f9fa;
+    --dark-color: #212529;
+    --border-radius: 8px;
+    --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --transition: all 0.3s ease;
+  }
+
+  .exam-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+
+  .card {
+    background: white;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    padding: 30px;
+    margin-bottom: 30px;
+    transition: var(--transition);
+  }
+
+  .card:hover {
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+  }
+
+  .exam-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+    flex-wrap: wrap;
+  }
+
+  h1 {
+    color: var(--primary-color);
+    font-weight: 600;
+    margin: 0;
+  }
+
+  .exam-actions {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+  }
+
+  .days-remaining {
+    background-color: rgba(244, 162, 97, 0.2);
+    padding: 8px 15px;
+    border-radius: 20px;
+    font-weight: 500;
+    color: #f8961e;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .days-remaining i {
+    font-size: 1.2rem;
+  }
+
+  .days-remaining span {
+    font-weight: 600;
+    color: var(--dark-color);
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 10px 20px;
+    border-radius: var(--border-radius);
+    font-weight: 500;
+    transition: var(--transition);
+    border: none;
+    cursor: pointer;
+    box-shadow: var(--box-shadow);
+  }
+
+  .btn-print {
+    background-color: var(--primary-color);
+    color: white;
+  }
+
+  .btn-back {
+    background-color: var(--secondary-color);
+    color: white;
+    text-decoration: none;
+    margin-top: 20px;
+  }
+
+  .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  .btn i {
+    margin-right: 8px;
+  }
+
+  .exam-alert {
+    background-color: rgba(244, 162, 97, 0.1);
+    border-left: 4px solid #f8961e;
+    padding: 12px 20px;
+    border-radius: 0 var(--border-radius) var(--border-radius) 0;
+    margin-bottom: 20px;
+    font-weight: 500;
+    color: var(--dark-color);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .exam-alert i {
+    color: #f8961e;
+    font-size: 1.2rem;
+  }
+
+  .table-responsive {
+    overflow-x: auto;
+    margin: 25px 0;
+  }
+
+  .exam-table {
+    width: 100%;
+    border-collapse: collapse;
+    box-shadow: var(--box-shadow);
+    border-radius: var(--border-radius);
+    overflow: hidden;
+  }
+
+  .exam-table thead tr {
+    background-color: var(--primary-color);
+    color: white;
+  }
+
+  .exam-table th {
+    padding: 15px 20px;
+    text-align: left;
+    font-weight: 600;
+  }
+
+  .exam-table td {
+    padding: 12px 20px;
+    border-bottom: 1px solid #e9ecef;
+  }
+
+  .exam-table tbody tr:hover {
+    background-color: #f8f9fa;
+  }
+
+  .exam-table th i {
+    margin-right: 8px;
+  }
+
+  .btn-location {
+    background: none;
+    border: none;
+    color: var(--primary-color);
+    cursor: pointer;
+    padding: 5px 10px;
+    border-radius: 4px;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.9rem;
+  }
+
+  .btn-location:hover {
+    background-color: rgba(67, 97, 238, 0.1);
+  }
+
+  .exam-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+  }
+
+  .upcoming {
+    background-color: rgba(76, 201, 240, 0.1);
+    color: #4cc9f0;
+  }
+
+  .ongoing {
+    background-color: rgba(72, 149, 239, 0.1);
+    color: #4895ef;
+  }
+
+  .completed {
+    background-color: rgba(233, 236, 239, 0.8);
+    color: #6c757d;
+  }
+
+  .exam-notes {
+    background-color: #f8f9fa;
+    border-radius: var(--border-radius);
+    padding: 20px;
+    margin: 30px 0;
+  }
+
+  .exam-notes h3 {
+    color: var(--primary-color);
+    margin-top: 0;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .exam-notes ul {
+    padding-left: 20px;
+    margin: 0;
+  }
+
+  .exam-notes li {
+    margin-bottom: 8px;
+  }
+
+  .modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+  }
+
+  .modal-content {
+    background-color: white;
+    margin: 5% auto;
+    padding: 25px;
+    border-radius: var(--border-radius);
+    width: 80%;
+    max-width: 600px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    position: relative;
+  }
+
+  .close-btn {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #aaa;
+  }
+
+  .close-btn:hover {
+    color: var(--dark-color);
+  }
+
+  .map-placeholder {
+    height: 300px;
+    background-color: #f8f9fa;
+    border-radius: var(--border-radius);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #6c757d;
+    margin: 20px 0;
+  }
+
+  .map-placeholder i {
+    font-size: 3rem;
+    color: var(--primary-color);
+    margin-bottom: 15px;
+  }
+
+  .btn-directions {
+    background-color: var(--success-color);
+    color: white;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .fade-in {
+    animation: fadeIn 0.8s ease-in;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @media (max-width: 768px) {
+    .exam-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 15px;
+    }
+
+    .exam-actions {
+      width: 100%;
+      justify-content: space-between;
+    }
+
+    .exam-table th,
+    .exam-table td {
+      padding: 10px 15px;
+      font-size: 0.9rem;
+    }
+
+    .modal-content {
+      width: 95%;
+      margin: 10% auto;
+    }
+  }
+
+  @media print {
+
+    .exam-actions,
+    .btn-back,
+    .exam-alert,
+    .btn-location {
+      display: none;
+    }
+
+    .card {
+      box-shadow: none;
+    }
+
+    .exam-table {
+      box-shadow: none;
+    }
+  }
+</style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    calculateNextExamDays();
+
+    updateExamStatuses();
+
+    const modal = document.getElementById('mapModal');
+    const closeBtn = document.querySelector('.close-btn');
+
+    closeBtn.addEventListener('click', function () {
+      modal.style.display = 'none';
+    });
+
+    window.addEventListener('click', function (event) {
+      if (event.target === modal) {
+        modal.style.display = 'none';
+      }
+    });
+
+    const rows = document.querySelectorAll('.exam-row');
+    rows.forEach((row, index) => {
+      row.style.animationDelay = `${index * 0.1}s`;
+      row.classList.add('fade-in');
+    });
+  });
+
+  function calculateNextExamDays() {
+    const examRows = document.querySelectorAll('.exam-row');
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    let closestDate = null;
+    let minDiff = Infinity;
+
+    examRows.forEach(row => {
+      const examDateStr = row.getAttribute('data-exam-date');
+      const examDate = parseDate(examDateStr);
+
+      if (examDate) {
+        const diff = examDate - today;
+        if (diff >= 0 && diff < minDiff) {
+          minDiff = diff;
+          closestDate = examDate;
+        }
+      }
+    });
+
+    if (closestDate) {
+      const daysRemaining = Math.ceil(minDiff / (1000 * 60 * 60 * 24));
+      document.getElementById('nextExamDays').textContent = daysRemaining;
+    }
+  }
+
+  function parseDate(dateStr) {
+    const parts = dateStr.split('/');
+    if (parts.length === 3) {
+      return new Date(parts[2], parts[0] - 1, parts[1]);
+    }
+    return null;
+  }
+
+  function updateExamStatuses() {
+    const now = new Date();
+    examRows.forEach(row => {
+      const dateCell = row.querySelector('td:nth-child(3)');
+      const timeCell = row.querySelector('td:nth-child(4)');
+      const statusBadge = row.querySelector('.exam-status');
+
+      if (dateCell && timeCell && statusBadge) {
+        const examDate = parseDate(dateCell.textContent);
+        const [startTime, endTime] = timeCell.textContent.split(' - ');
+
+        if (examDate && startTime && endTime) {
+          const [startHour, startMin] = startTime.split(':').map(Number);
+          const [endHour, endMin] = endTime.split(':').map(Number);
+
+          const examStart = new Date(examDate);
+          examStart.setHours(startHour, startMin);
+
+          const examEnd = new Date(examDate);
+          examEnd.setHours(endHour, endMin);
+
+          if (now < examStart) {
+            statusBadge.className = 'exam-status upcoming';
+            statusBadge.innerHTML = '<i class="fas fa-hourglass-half"></i> Upcoming';
+          } else if (now >= examStart && now <= examEnd) {
+            statusBadge.className = 'exam-status ongoing';
+            statusBadge.innerHTML = '<i class="fas fa-pencil-alt"></i> In Progress';
+          } else {
+            statusBadge.className = 'exam-status completed';
+            statusBadge.innerHTML = '<i class="fas fa-check-circle"></i> Completed';
+          }
+        }
+      }
+    });
+  }
+
+  function showOnMap(roomName) {
+    document.getElementById('mapRoomName').textContent = roomName;
+    document.getElementById('mapLocationTitle').textContent = `Location: ${roomName}`;
+    document.getElementById('mapModal').style.display = 'block';
+  }
+  document.addEventListener('DOMContentLoaded', function () {
+    const examRows = document.querySelectorAll('.exam-row');
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    let closestDate = null;
+    let minDiff = Infinity;
+
+    examRows.forEach(row => {
+      const dateStr = row.getAttribute('data-exam-date');
+      if (!dateStr) return;
+
+      const examDate = new Date(dateStr);
+      examDate.setHours(0, 0, 0, 0);
+
+      const diff = examDate - today;
+      if (diff >= 0 && diff < minDiff) {
+        minDiff = diff;
+        closestDate = examDate;
+      }
+    });
+
+    if (closestDate) {
+      const daysLeft = Math.ceil(minDiff / (1000 * 60 * 60 * 24));
+      document.getElementById('nextExamDays').textContent = daysLeft;
+    } else {
+      document.getElementById('nextExamDays').textContent = '0';
+    }
+  });
+
+</script>
+{% endblock %}

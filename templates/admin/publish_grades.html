@@ -1,0 +1,371 @@
+{% extends "admin/base.html" %}
+
+{% block content %}
+<div class="publish-container">
+    <div class="publish-header">
+        <h1 class="publish-title">
+            <i class="fas fa-cloud-upload-alt"></i> Publish Grades
+        </h1>
+        <a href="{{ url_for('admin.dashboard') }}" class="btn btn-back">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
+
+    <div class="publish-card">
+        <div class="publish-info">
+            <i class="fas fa-info-circle"></i>
+            <p>Publishing grades will make them visible to students and lock them from further editing.</p>
+        </div>
+
+        <form method="POST" action="{{ url_for('admin.publish_grades') }}" class="publish-form">
+            <div class="form-group">
+                <label class="form-label">
+                    <i class="fas fa-book"></i> Select Subject
+                </label>
+                <select name="subject_id" class="form-select" required>
+                    <option value="" disabled selected>Choose a subject to publish</option>
+                    {% for subject in subjects %}
+                    <option value="{{ subject._id }}">{{ subject.name }} (Stage {{ subject.stage }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-paper-plane"></i> Publish Grades
+                </button>
+                <button type="button" class="btn btn-info" id="preview-btn">
+                    <i class="fas fa-eye"></i> Preview Grades
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <div class="preview-section" id="preview-section" style="display: none;">
+        <h3><i class="fas fa-list-ol"></i> Grades Preview</h3>
+        <div class="preview-table" id="preview-content">
+        </div>
+    </div>
+</div>
+
+<style>
+    :root {
+        --primary: #4361ee;
+        --primary-dark: #3a56d4;
+        --secondary: #3f37c9;
+        --success: #4cc9f0;
+        --danger: #f72585;
+        --warning: #f8961e;
+        --info: #4895ef;
+        --light: #f8f9fa;
+        --dark: #212529;
+        --gray: #6c757d;
+        --white: #ffffff;
+    }
+
+    .publish-container {
+        max-width: 800px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+    }
+
+    .publish-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .publish-title {
+        font-size: 1.8rem;
+        color: var(--dark);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .publish-title i {
+        color: var(--primary);
+    }
+
+    .publish-card {
+        background-color: var(--white);
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .publish-info {
+        background-color: rgba(67, 97, 238, 0.1);
+        border-left: 4px solid var(--primary);
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        display: flex;
+        gap: 0.75rem;
+        border-radius: 4px;
+    }
+
+    .publish-info i {
+        color: var(--primary);
+        font-size: 1.2rem;
+    }
+
+    .publish-info p {
+        margin: 0;
+        color: var(--dark);
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+        color: var(--dark);
+    }
+
+    .form-label i {
+        margin-right: 8px;
+        color: var(--primary);
+    }
+
+    .form-select {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        font-size: 1rem;
+        transition: all 0.2s ease;
+        appearance: none;
+        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 1rem center;
+        background-size: 1rem;
+    }
+
+    .form-select:focus {
+        border-color: var(--primary);
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+    }
+
+    .preview-section {
+        background-color: var(--white);
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        padding: 2rem;
+        margin-top: 1rem;
+    }
+
+    .preview-section h3 {
+        margin-top: 0;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        color: var(--dark);
+    }
+
+    .preview-table {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+
+    .preview-table table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .preview-table th {
+        background-color: var(--primary);
+        color: var(--white);
+        padding: 1rem;
+        text-align: left;
+        position: sticky;
+        top: 0;
+    }
+
+    .preview-table td {
+        padding: 1rem;
+        border-bottom: 1px solid #eee;
+    }
+
+    .preview-table tr:nth-child(even) {
+        background-color: #f9f9f9;
+    }
+
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 500;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        border: none;
+        cursor: pointer;
+        font-size: 0.95rem;
+    }
+
+    .btn i {
+        font-size: 0.9rem;
+    }
+
+    .btn-primary {
+        background-color: var(--primary);
+        color: var(--white);
+    }
+
+    .btn-primary:hover {
+        background-color: var(--primary-dark);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(67, 97, 238, 0.2);
+    }
+
+    .btn-info {
+        background-color: var(--info);
+        color: var(--white);
+    }
+
+    .btn-info:hover {
+        background-color: #3a7bd5;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(72, 149, 239, 0.2);
+    }
+
+    .btn-back {
+        background-color: var(--light);
+        color: var(--dark);
+    }
+
+    .btn-back:hover {
+        background-color: #e9ecef;
+    }
+
+    @media (max-width: 768px) {
+        .publish-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .form-actions {
+            flex-direction: column;
+        }
+    }
+
+    .loading {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 3px solid rgba(255, 255, 255, .3);
+        border-radius: 50%;
+        border-top-color: var(--white);
+        animation: spin 1s ease-in-out infinite;
+    }
+
+    @keyframes spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const previewBtn = document.getElementById('preview-btn');
+        const previewSection = document.getElementById('preview-section');
+        const previewContent = document.getElementById('preview-content');
+        const subjectSelect = document.querySelector('select[name="subject_id"]');
+
+        previewBtn.addEventListener('click', function () {
+            const subjectId = subjectSelect.value;
+
+            if (!subjectId) {
+                alert('Please select a subject first');
+                return;
+            }
+
+            previewBtn.innerHTML = '<span class="loading"></span> Loading...';
+
+            fetch(`/admin/get_grades_preview?subject_id=${subjectId}`)
+                .then(response => response.json())
+                .then(data => {
+                    previewBtn.innerHTML = '<i class="fas fa-eye"></i> Preview Grades';
+
+                    if (data.error) {
+                        alert(data.error);
+                        return;
+                    }
+
+                    let html = `
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Student</th>
+                                    <th>Grade</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+
+                    data.grades.forEach(grade => {
+                        html += `
+                            <tr>
+                                <td>${grade.ID}</td>
+                                <td>${grade.student_name}</td>
+                                <td>${grade.grade}</td>
+                                <td>${grade.published ? 'Published' : 'Unpublished'}</td>
+                            </tr>
+                        `;
+                    });
+
+                    html += `
+                            </tbody>
+                        </table>
+                        <p class="preview-summary">Total: ${data.grades.length} students | 
+                        Average: ${data.average.toFixed(2)}</p>
+                    `;
+
+                    previewContent.innerHTML = html;
+                    previewSection.style.display = 'block';
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    previewBtn.innerHTML = '<i class="fas fa-eye"></i> Preview Grades';
+                    alert('Failed to load preview data');
+                });
+        });
+
+        const formCard = document.querySelector('.publish-card');
+        formCard.style.opacity = '0';
+        formCard.style.transform = 'translateY(20px)';
+        formCard.style.animation = 'fadeInUp 0.4s ease forwards';
+
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fadeInUp {
+                from { opacity: 0; transform: translateY(20px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+        `;
+        document.head.appendChild(style);
+    });
+</script>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+{% endblock %}

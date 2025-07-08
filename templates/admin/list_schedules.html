@@ -1,0 +1,469 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Schedules Management{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h1 class="page-title">
+            <i class="fas fa-calendar-alt"></i>
+            Class Schedules
+        </h1>
+        <div class="action-buttons">
+            <a href="{{ url_for('admin.add_schedule') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i>
+                Add New Schedule
+            </a>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <div class="filters-container">
+                <div class="filter-group">
+                    <label for="stageFilter">Filter by Stage:</label>
+                    <select id="stageFilter" class="form-control">
+                        <option value="all">All Stages</option>
+                        <option value="1">Stage 1</option>
+                        <option value="2">Stage 2</option>
+                        <option value="3">Stage 3</option>
+                        <option value="4">Stage 4</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="dayFilter">Filter by Day:</label>
+                    <select id="dayFilter" class="form-control">
+                        <option value="all">All Days</option>
+                        <option value="Sunday">Sunday</option>
+                        <option value="Monday">Monday</option>
+                        <option value="Tuesday">Tuesday</option>
+                        <option value="Wednesday">Wednesday</option>
+                        <option value="Thursday">Thursday</option>
+                        <option value="Friday">Friday</option>
+                        <option value="Saturday">Saturday</option>
+                    </select>
+                </div>
+                <div class="search-box">
+                    <div class="search-input-container">
+                        <input type="text" id="searchInput"
+                            placeholder="Search by subject, doctor, time, room or term..." class="search-input">
+                        <i class="fas fa-search search-icon"></i>
+                    </div>
+                    <button id="resetBtn" class="btn btn-secondary">
+                        <i class="fas fa-sync-alt"></i> Reset
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Subject</th>
+                            <th>Stage</th>
+                            <th>Doctor</th>
+                            <th>Day</th>
+                            <th>Time</th>
+                            <th>Room</th>
+                            <th>Term</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="schedulesTableBody">
+                        {% for schedule in schedules %}
+                        <tr class="schedule-row" data-stage="{{ schedule.subject_stage }}"
+                            data-day="{{ schedule.day }}">
+                            <td>
+                                <strong class="subject-name">{{ schedule.subject_name }}</strong>
+                            </td>
+                            <td class="subject-stage">
+                                <span class="badge stage-badge">Stage {{ schedule.subject_stage }}</span>
+                            </td>
+                            <td>
+                                <div class="doctor-info">
+                                    <div class="doctor-name">{{ schedule.doctor_name }}</div>
+                                    <div class="doctor-email small text-muted">{{ schedule.doctor_email }}</div>
+                                </div>
+                            </td>
+                            <td class="schedule-day">{{ schedule.day }}</td>
+                            <td class="schedule-time">{{ schedule.time }}</td>
+                            <td>
+                                <span class="badge room-badge">{{ schedule.room }}</span>
+                            </td>
+                            <td>
+                                <span class="badge term-badge">{{ schedule.term }}</span>
+                            </td>
+                            <td class="actions">
+                                <a href="{{ url_for('admin.edit_schedule', id=schedule._id) }}" class="btn-edit"
+                                    title="Edit">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{{ url_for('admin.delete_schedule', id=schedule._id) }}" class="btn-delete"
+                                    title="Delete" onclick="return confirmDelete()">
+                                    <i class="fas fa-trash-alt"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="8" class="empty-state">
+                                <i class="fas fa-calendar-times"></i>
+                                <p>No schedules found</p>
+                                <a href="{{ url_for('admin.add_schedule') }}" class="btn btn-primary">
+                                    <i class="fas fa-plus"></i>
+                                    Create First Schedule
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .data-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.9rem;
+    }
+
+    .data-table th {
+        background-color: #f8f9fc;
+        color: #5a5c69;
+        font-weight: 700;
+        padding: 1rem;
+        text-align: left;
+        border-bottom: 1px solid #e3e6f0;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.05rem;
+    }
+
+    .data-table td {
+        padding: 1rem;
+        border-bottom: 1px solid #e3e6f0;
+        vertical-align: middle;
+    }
+
+    .data-table tr:hover {
+        background-color: #f8f9fc;
+    }
+
+    .badge {
+        display: inline-block;
+        padding: 0.35em 0.65em;
+        font-size: 0.75em;
+        font-weight: 700;
+        line-height: 1;
+        text-align: center;
+        white-space: nowrap;
+        vertical-align: baseline;
+        border-radius: 0.25rem;
+    }
+
+    .stage-badge {
+        background-color: #e9f7fe;
+        color: #1c7ed6;
+        border: 1px solid #c5e3fc;
+    }
+
+    .room-badge {
+        background-color: #f0f7ff;
+        color: #3a7bd5;
+        border: 1px solid #d1e3fa;
+    }
+
+    .term-badge {
+        background-color: #f0fff4;
+        color: #38a169;
+        border: 1px solid #c6f6d5;
+    }
+
+    .actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .btn-edit,
+    .btn-delete {
+        width: 32px;
+        height: 32px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        text-decoration: none;
+        transition: all 0.2s;
+    }
+
+    .btn-edit {
+        color: #4e73df;
+        border: 1px solid #4e73df;
+    }
+
+    .btn-edit:hover {
+        background-color: #4e73df;
+        color: white;
+    }
+
+    .btn-delete {
+        color: #e74a3b;
+        border: 1px solid #e74a3b;
+    }
+
+    .btn-delete:hover {
+        background-color: #e74a3b;
+        color: white;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 2rem;
+        color: #858796;
+    }
+
+    .empty-state i {
+        font-size: 2rem;
+        color: #dddfeb;
+        margin-bottom: 0.5rem;
+    }
+
+    .empty-state p {
+        margin: 0.5rem 0 1rem;
+    }
+
+    .filters-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 1.5rem;
+        background-color: #f8f9fc;
+        border-bottom: 1px solid #e3e6f0;
+    }
+
+    .filter-group {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .filter-group label {
+        margin-bottom: 0;
+        font-weight: 600;
+        color: #5a5c69;
+        white-space: nowrap;
+    }
+
+    .form-control {
+        padding: 0.375rem 0.75rem;
+        border: 1px solid #d1d3e2;
+        border-radius: 0.35rem;
+        font-size: 0.875rem;
+        height: calc(1.5em + 0.75rem + 2px);
+        min-width: 120px;
+    }
+
+    .search-box {
+        display: flex;
+        gap: 0.75rem;
+        max-width: 600px;
+        width: 100%;
+    }
+
+    .search-input-container {
+        position: relative;
+        flex: 1;
+    }
+
+    .search-input {
+        width: 100%;
+        padding: 0.5rem 1rem 0.5rem 2.5rem;
+        border: 1px solid #d1d3e2;
+        border-radius: 0.35rem;
+        font-size: 0.875rem;
+        transition: all 0.3s;
+    }
+
+    .search-input:focus {
+        outline: none;
+        border-color: #4e73df;
+        box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+    }
+
+    .search-icon {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #b7b9cc;
+    }
+
+    .hidden-row {
+        display: none;
+    }
+
+    .no-results-row {
+        text-align: center;
+        padding: 2rem;
+        color: #858796;
+    }
+
+    .no-results-row i {
+        font-size: 2rem;
+        color: #dddfeb;
+        margin-bottom: 0.5rem;
+    }
+
+    .no-results-row p {
+        margin: 0.5rem 0 1rem;
+    }
+
+    .doctor-info {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .doctor-name {
+        font-weight: 600;
+    }
+
+    .doctor-email {
+        font-size: 0.8rem;
+    }
+
+    @media (max-width: 992px) {
+        .filters-container {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 1rem;
+        }
+
+        .filter-group {
+            width: 100%;
+        }
+
+        .search-box {
+            width: 100%;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .filter-group {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .form-control {
+            width: 100%;
+        }
+    }
+</style>
+
+<script>
+    function confirmDelete() {
+        return confirm('Are you sure you want to delete this schedule? This action cannot be undone.');
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const searchInput = document.getElementById('searchInput');
+        const resetBtn = document.getElementById('resetBtn');
+        const stageFilter = document.getElementById('stageFilter');
+        const dayFilter = document.getElementById('dayFilter');
+        const tableBody = document.getElementById('schedulesTableBody');
+        const originalRows = Array.from(document.querySelectorAll('.schedule-row'));
+
+        function filterSchedules() {
+            const searchTerm = searchInput.value.trim().toLowerCase();
+            const selectedStage = stageFilter.value;
+            const selectedDay = dayFilter.value;
+
+            let hasVisibleRows = false;
+
+            originalRows.forEach(row => {
+                const subject = row.querySelector('.subject-name').textContent.toLowerCase();
+                const doctorName = row.querySelector('.doctor-name').textContent.toLowerCase();
+                const time = row.querySelector('.schedule-time').textContent.toLowerCase();
+                const room = row.querySelector('.room-badge').textContent.toLowerCase();
+                const term = row.querySelector('.term-badge').textContent.toLowerCase();
+                const rowStage = row.getAttribute('data-stage');
+                const rowDay = row.getAttribute('data-day').toLowerCase();
+
+                const stageMatch = selectedStage === 'all' || rowStage === selectedStage;
+                const dayMatch = selectedDay === 'all' || rowDay === selectedDay.toLowerCase();
+                const searchMatch = searchTerm === '' ||
+                    subject.includes(searchTerm) ||
+                    doctorName.includes(searchTerm) ||
+                    time.includes(searchTerm) ||
+                    room.includes(searchTerm) ||
+                    term.includes(searchTerm);
+
+                if (stageMatch && dayMatch && searchMatch) {
+                    row.style.display = '';
+                    hasVisibleRows = true;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            const existingNoResults = tableBody.querySelector('.no-results-row');
+            if (existingNoResults) {
+                tableBody.removeChild(existingNoResults);
+            }
+
+            if (!hasVisibleRows) {
+                const noResultsRow = document.createElement('tr');
+                noResultsRow.className = 'no-results-row';
+                noResultsRow.innerHTML = `
+                    <td colspan="8">
+                        <i class="fas fa-search"></i>
+                        <p>No schedules found matching your criteria</p>
+                        <button class="btn btn-primary" onclick="resetFilters()">
+                            <i class="fas fa-sync-alt"></i> Reset Filters
+                        </button>
+                    </td>
+                `;
+                tableBody.appendChild(noResultsRow);
+            }
+        }
+
+        function resetFilters() {
+            searchInput.value = '';
+            stageFilter.value = 'all';
+            dayFilter.value = 'all';
+            filterSchedules();
+        }
+
+        searchInput.addEventListener('input', filterSchedules);
+        resetBtn.addEventListener('click', resetFilters);
+        stageFilter.addEventListener('change', filterSchedules);
+        dayFilter.addEventListener('change', filterSchedules);
+
+        originalRows.forEach(row => {
+            const editLink = row.querySelector('.btn-edit');
+            if (editLink) {
+                row.style.cursor = 'pointer';
+                row.addEventListener('click', function (e) {
+                    if (!e.target.closest('.btn-edit') && !e.target.closest('.btn-delete')) {
+                        window.location.href = editLink.href;
+                    }
+                });
+            }
+        });
+
+        filterSchedules();
+    });
+
+    window.resetFilters = function () {
+        document.getElementById('searchInput').value = '';
+        document.getElementById('stageFilter').value = 'all';
+        document.getElementById('dayFilter').value = 'all';
+        document.dispatchEvent(new Event('DOMContentLoaded'));
+    };
+</script>
+{% endblock %}

@@ -1,0 +1,346 @@
+{% extends "admin/base.html" %}
+
+{% block content %}
+<div class="edit-exam-room-container">
+    <div class="edit-exam-room-header">
+        <h1 class="edit-exam-room-title">
+            <i class="fas fa-edit"></i> Edit Exam Room
+        </h1>
+        <a href="{{ url_for('admin.list_exam_rooms') }}" class="btn btn-back">
+            <i class="fas fa-arrow-left"></i> Back to List
+        </a>
+    </div>
+
+    <div class="edit-exam-room-card">
+        <form method="POST" class="edit-exam-room-form">
+            <div class="form-group">
+                <label class="form-label">
+                    <i class="fas fa-book"></i> Subject
+                </label>
+                <select name="subject_id" class="form-select" required>
+                    {% for subject in subjects %}
+                    <option value="{{ subject._id }}" {% if subject._id==exam_room.subject_id %}selected{% endif %}>
+                        {{ subject.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">
+                        <i class="fas fa-calendar-alt"></i> Exam Date
+                    </label>
+                    <div class="date-input-container">
+                        <input type="date" name="exam_date" class="date-input" 
+                               value="{{ exam_room.exam_date.strftime('%Y-%m-%d') if exam_room.exam_date else '' }}" 
+                               required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">
+                        <i class="fas fa-clock"></i> Time
+                    </label>
+                    <div class="time-input-container">
+                        <input type="time" name="time" class="time-input"
+                               value="{{ exam_room.time.strftime('%H:%M') if exam_room.time is not string else exam_room.time }}" 
+                               required>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">
+                        <i class="fas fa-calendar-day"></i> Day
+                    </label>
+                    <select name="day" class="form-select" required>
+                        <option value="Sunday" {% if exam_room.day=='Sunday' %}selected{% endif %}>Sunday</option>
+                        <option value="Monday" {% if exam_room.day=='Monday' %}selected{% endif %}>Monday</option>
+                        <option value="Tuesday" {% if exam_room.day=='Tuesday' %}selected{% endif %}>Tuesday</option>
+                        <option value="Wednesday" {% if exam_room.day=='Wednesday' %}selected{% endif %}>Wednesday</option>
+                        <option value="Thursday" {% if exam_room.day=='Thursday' %}selected{% endif %}>Thursday</option>
+                        <option value="Friday" {% if exam_room.day=='Friday' %}selected{% endif %}>Friday</option>
+                        <option value="Saturday" {% if exam_room.day=='Saturday' %}selected{% endif %}>Saturday</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">
+                        <i class="fas fa-door-closed"></i> Room
+                    </label>
+                    <input type="text" name="room" class="form-input" value="{{ exam_room.room }}" required>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Save Changes
+                </button>
+                <button type="reset" class="btn btn-reset">
+                    <i class="fas fa-undo"></i> Reset
+                </button>
+                <a href="{{ url_for('admin.list_exam_rooms') }}" class="btn btn-secondary">
+                    <i class="fas fa-times"></i> Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    :root {
+        --primary: #4361ee;
+        --primary-dark: #3a56d4;
+        --secondary: #3f37c9;
+        --success: #4cc9f0;
+        --danger: #f72585;
+        --warning: #f8961e;
+        --info: #4895ef;
+        --light: #f8f9fa;
+        --dark: #212529;
+        --gray: #6c757d;
+        --white: #ffffff;
+        --shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    }
+
+    .edit-exam-room-container {
+        max-width: 800px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+    }
+
+    .edit-exam-room-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .edit-exam-room-title {
+        font-size: 1.8rem;
+        color: var(--dark);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .edit-exam-room-title i {
+        color: var(--primary);
+    }
+
+    .edit-exam-room-card {
+        background-color: var(--white);
+        border-radius: 12px;
+        box-shadow: var(--shadow);
+        padding: 2rem;
+        transition: var(--transition);
+    }
+
+    .edit-exam-room-card:hover {
+        box-shadow: 0 6px 25px rgba(0, 0, 0, 0.12);
+    }
+
+    .form-row {
+        display: flex;
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .form-group {
+        flex: 1;
+        margin-bottom: 0;
+    }
+
+    .form-label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+        color: var(--dark);
+    }
+
+    .form-label i {
+        margin-right: 8px;
+        color: var(--primary);
+    }
+
+    .form-select,
+    .form-input,
+    .time-input,
+    .date-input {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        font-size: 1rem;
+        transition: var(--transition);
+    }
+
+    .form-select {
+        appearance: none;
+        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 1rem center;
+        background-size: 1rem;
+    }
+
+    .form-select:focus,
+    .form-input:focus,
+    .time-input:focus,
+    .date-input:focus {
+        border-color: var(--primary);
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+    }
+
+    .time-input-container,
+    .date-input-container {
+        position: relative;
+    }
+
+    .time-input-container::after {
+        content: '\f017';
+        font-family: 'Font Awesome 6 Free';
+        font-weight: 900;
+        position: absolute;
+        right: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--gray);
+        pointer-events: none;
+    }
+
+    .date-input-container::after {
+        content: '\f073';
+        font-family: 'Font Awesome 6 Free';
+        font-weight: 900;
+        position: absolute;
+        right: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--gray);
+        pointer-events: none;
+    }
+
+    .time-input,
+    .date-input {
+        padding-right: 2.5rem;
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--light-gray);
+    }
+
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 500;
+        text-decoration: none;
+        transition: var(--transition);
+        border: none;
+        cursor: pointer;
+        font-size: 0.95rem;
+    }
+
+    .btn i {
+        font-size: 0.9rem;
+    }
+
+    .btn-primary {
+        background-color: var(--primary);
+        color: var(--white);
+    }
+
+    .btn-primary:hover {
+        background-color: var(--primary-dark);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(67, 97, 238, 0.2);
+    }
+
+    .btn-secondary {
+        background-color: var(--light);
+        color: var(--dark);
+    }
+
+    .btn-secondary:hover {
+        background-color: #e9ecef;
+    }
+
+    .btn-back {
+        background-color: var(--light);
+        color: var(--dark);
+    }
+
+    .btn-back:hover {
+        background-color: #e9ecef;
+    }
+
+    .btn-reset {
+        background-color: var(--light);
+        color: var(--dark);
+    }
+
+    .btn-reset:hover {
+        background-color: #e9ecef;
+    }
+
+    @media (max-width: 768px) {
+        .edit-exam-room-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .form-row {
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .form-actions {
+            flex-direction: column;
+        }
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const formCard = document.querySelector('.edit-exam-room-card');
+        formCard.style.opacity = '0';
+        formCard.style.transform = 'translateY(20px)';
+        formCard.style.animation = 'fadeInUp 0.4s ease forwards';
+
+        // Auto-fill day based on selected date
+        const dateInput = document.querySelector('.date-input');
+        dateInput.addEventListener('change', function() {
+            const selectedDate = new Date(this.value);
+            const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+            const dayName = days[selectedDate.getDay()];
+            
+            const daySelect = document.querySelector('select[name="day"]');
+            daySelect.value = dayName;
+        });
+
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fadeInUp {
+                from { opacity: 0; transform: translateY(20px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+        `;
+        document.head.appendChild(style);
+    });
+</script>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+{% endblock %}

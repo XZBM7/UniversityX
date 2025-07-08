@@ -1,0 +1,342 @@
+{% extends "student/base.html" %}
+
+{% block title %}Select Subjects | University X{% endblock %}
+
+{% block extra_css %}
+<style>
+  :root {
+    --danger: #e74c3c;
+    --success: #2ecc71;
+  }
+
+  .subject-selection {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background: var(--white);
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+  }
+
+  .selection-header {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+
+  .selection-header h1 {
+    color: var(--primary);
+    margin-bottom: 0.5rem;
+  }
+
+  .selection-header p {
+    color: var(--secondary);
+  }
+
+  .selection-counter {
+    display: inline-block;
+    background: var(--primary);
+    color: white;
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    font-weight: bold;
+    margin-left: 0.5rem;
+    font-size: 0.9rem;
+  }
+
+  .subjects-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .subject-card {
+    background: var(--light);
+    border-radius: 8px;
+    padding: 1.2rem;
+    border-left: 4px solid var(--primary);
+    transition: var(--transition);
+    position: relative;
+  }
+
+  .subject-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  }
+
+  .subject-checkbox {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  .subject-label {
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
+    padding-left: 30px;
+    position: relative;
+  }
+
+  .subject-label::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 2px;
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--secondary);
+    border-radius: 4px;
+    transition: var(--transition);
+  }
+
+  .subject-checkbox:checked+.subject-label::before {
+    background-color: var(--primary);
+    border-color: var(--primary);
+  }
+
+  .subject-checkbox:checked+.subject-label::after {
+    content: '\f00c';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    position: absolute;
+    left: 4px;
+    top: 2px;
+    color: white;
+    font-size: 12px;
+  }
+
+  .subject-name {
+    font-weight: 600;
+    margin-bottom: 0.3rem;
+    color: var(--dark);
+  }
+
+  .subject-meta {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.9rem;
+    color: var(--secondary);
+  }
+
+  .subject-meta span {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+
+  .form-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--light-gray);
+  }
+
+  .submit-btn {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 0.8rem 2rem;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .submit-btn:hover {
+    background: var(--primary-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
+  }
+
+  .submit-btn:disabled {
+    background: var(--secondary);
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+
+  .back-link {
+    color: var(--secondary);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: var(--transition);
+  }
+
+  .back-link:hover {
+    color: var(--primary);
+  }
+
+  .error-message {
+    color: var(--danger);
+    margin-top: 0.5rem;
+    font-size: 0.9rem;
+    display: none;
+  }
+
+  @media (max-width: 768px) {
+    .subject-selection {
+      padding: 1.5rem;
+    }
+
+    .subjects-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .form-actions {
+      flex-direction: column-reverse;
+      gap: 1rem;
+    }
+
+    .submit-btn {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="subject-selection">
+  <div class="selection-header">
+    <h1>Select Your Subjects <span id="selected-count" class="selection-counter">0</span></h1>
+    <p>Please choose between 4 to 6 subjects for this semester</p>
+  </div>
+
+  <form method="POST" id="subjects-form">
+    <div class="subjects-grid">
+    {% for subject in subjects %}
+  {% if subject.registration_open %}
+    <div class="subject-card">
+      <input type="checkbox" name="subjects" id="subject-{{ subject._id }}" value="{{ subject._id }}"
+        class="subject-checkbox" {% if subject._id in user.subjects %} checked {% endif %}>
+      <label for="subject-{{ subject._id }}" class="subject-label">
+        <span class="subject-name">{{ subject.name }}</span>
+        <div class="subject-meta">
+          <span><i class="fas fa-layer-group"></i> Stage {{ subject.stage }}</span>
+          <span><i class="fas fa-clock"></i> {{ subject.hours }} hours</span>
+        </div>
+      </label>
+    </div>
+  {% else %}
+    <div class="subject-card" style="opacity: 0.5; pointer-events: none;" title="Registration Closed">
+      <input type="checkbox" disabled class="subject-checkbox" id="subject-{{ subject._id }}">
+      <label for="subject-{{ subject._id }}" class="subject-label">
+        <span class="subject-name">{{ subject.name }} <small style="color:#e74c3c;">(Registration Closed)</small></span>
+        <div class="subject-meta">
+          <span><i class="fas fa-layer-group"></i> Stage {{ subject.stage }}</span>
+          <span><i class="fas fa-clock"></i> {{ subject.hours }} hours</span>
+        </div>
+      </label>
+    </div>
+  {% endif %}
+{% endfor %}
+
+    </div>
+
+    <div class="error-message" id="selection-error">
+      <i class="fas fa-exclamation-circle"></i> You must select between 4 to 6 subjects
+    </div>
+
+    <div class="form-actions">
+      <a href="{{ url_for('student.dashboard') }}" class="back-link">
+        <i class="fas fa-arrow-left"></i> Back to Dashboard
+      </a>
+      <button type="submit" class="submit-btn" id="submit-btn" disabled>
+        <i class="fas fa-save"></i> Save Selection
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const checkboxes = document.querySelectorAll('.subject-checkbox');
+    const submitBtn = document.getElementById('submit-btn');
+    const selectedCount = document.getElementById('selected-count');
+    const errorMessage = document.getElementById('selection-error');
+    const minSubjects = 4;
+    const maxSubjects = 6;
+
+    updateSelectedCount();
+    validateSelection();
+
+    checkboxes.forEach(checkbox => {
+      checkbox.addEventListener('change', function () {
+        updateSelectedCount();
+        validateSelection();
+      });
+    });
+
+    document.getElementById('subjects-form').addEventListener('submit', function (e) {
+      const selected = getSelectedCount();
+      if (selected < minSubjects || selected > maxSubjects) {
+        e.preventDefault();
+        showError();
+      }
+    });
+
+    function getSelectedCount() {
+      return document.querySelectorAll('.subject-checkbox:checked').length;
+    }
+
+    function updateSelectedCount() {
+      const count = getSelectedCount();
+      selectedCount.textContent = count;
+
+      const dangerColor = getComputedStyle(document.documentElement).getPropertyValue('--danger');
+      const successColor = getComputedStyle(document.documentElement).getPropertyValue('--success');
+
+      if (count < minSubjects || count > maxSubjects) {
+        selectedCount.style.backgroundColor = dangerColor.trim();
+      } else {
+        selectedCount.style.backgroundColor = successColor.trim();
+      }
+    }
+
+    function validateSelection() {
+      const selected = getSelectedCount();
+      if (selected >= minSubjects && selected <= maxSubjects) {
+        submitBtn.disabled = false;
+        hideError();
+      } else {
+        submitBtn.disabled = true;
+        if (selected > 0) {
+          showError();
+        } else {
+          hideError();
+        }
+      }
+    }
+
+    function showError() {
+      errorMessage.style.display = 'block';
+    }
+
+    function hideError() {
+      errorMessage.style.display = 'none';
+    }
+
+    const cards = document.querySelectorAll('.subject-card');
+    cards.forEach((card, index) => {
+      card.style.opacity = '0';
+      card.style.transform = 'translateY(20px)';
+      card.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+      setTimeout(() => {
+        card.style.opacity = '1';
+        card.style.transform = 'translateY(0)';
+      }, 100 * index);
+    });
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,450 @@
+{% extends "student/base.html" %}
+
+{% block content %}
+<div class="profile-edit-container">
+  <div class="profile-edit-card">
+    <div class="profile-edit-header">
+      <h1><i class="fas fa-user-edit"></i> Edit Profile</h1>
+      <p>Update your personal information</p>
+    </div>
+
+    <form method="POST" enctype="multipart/form-data" id="profileForm" class="profile-edit-form">
+      <div class="form-group floating-label">
+        <input type="text" id="name" name="name" value="{{ user.name }}" required>
+        <label for="name">Full Name</label>
+        <i class="fas fa-user"></i>
+      </div>
+
+      <div class="form-group floating-label">
+        <input type="email" id="email" name="email" value="{{ user.email }}" required>
+        <label for="email">Email Address</label>
+        <i class="fas fa-envelope"></i>
+      </div>
+
+      <div class="form-group floating-label">
+        <input type="password" id="password" name="password" placeholder=" ">
+        <label for="password">New Password</label>
+        <i class="fas fa-lock"></i>
+        <div class="password-hint">Leave blank to keep current password</div>
+        <div class="password-strength">
+          <div class="strength-meter" id="strengthMeter"></div>
+          <span id="strengthText">Weak</span>
+        </div>
+      </div>
+
+      <div class="form-group profile-image-group">
+        <label>Profile Picture</label>
+        <div class="image-upload-container">
+          <div class="image-preview">
+            {% if user.profile_image %}
+            <img src="{{ url_for('static', filename='uploads/' + user.profile_image) }}" id="profileImage"
+              class="profile-image">
+            {% else %}
+            <img src="{{ url_for('static', filename='images/default-profile.png') }}" id="profileImage"
+              class="profile-image">
+            {% endif %}
+            <div class="image-upload-overlay">
+              <i class="fas fa-camera"></i>
+              <span>Change Photo</span>
+            </div>
+            <input type="file" name="image" id="imageUpload" accept="image/*">
+          </div>
+          <div class="image-upload-info">
+            <p>JPG, GIF or PNG. Max size 2MB</p>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="form-actions">
+        <a href="{{ url_for('student.dashboard') }}" class="btn btn-secondary">
+          <i class="fas fa-arrow-left"></i> Cancel
+        </a>
+        <button type="submit" class="btn btn-primary">
+          <i class="fas fa-save"></i> Save Changes
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<style>
+  .profile-edit-container {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 1.5rem;
+  }
+
+  .profile-edit-card {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 6px 30px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+    padding: 2.5rem;
+  }
+
+  .profile-edit-header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+  }
+
+  .profile-edit-header h1 {
+    font-size: 1.8rem;
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .profile-edit-header h1 i {
+    margin-right: 10px;
+    color: #3498db;
+  }
+
+  .profile-edit-header p {
+    color: #7f8c8d;
+    font-size: 0.95rem;
+  }
+
+  .profile-edit-form {
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  .form-group {
+    margin-bottom: 1.8rem;
+    position: relative;
+  }
+
+  .form-group label {
+    display: block;
+    margin-bottom: 0.75rem;
+    font-weight: 500;
+    color: #34495e;
+    font-size: 0.95rem;
+  }
+
+  .floating-label {
+    position: relative;
+  }
+
+  .floating-label label {
+    position: absolute;
+    top: 18px;
+    left: 45px;
+    margin-bottom: 0;
+    color: #95a5a6;
+    font-weight: 400;
+    transition: all 0.2s ease;
+    pointer-events: none;
+  }
+
+  .floating-label i {
+    position: absolute;
+    top: 18px;
+    left: 15px;
+    color: #bdc3c7;
+    font-size: 1.1rem;
+    transition: all 0.2s ease;
+  }
+
+  .floating-label input {
+    width: 100%;
+    padding: 18px 20px 18px 45px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background-color: #f9f9f9;
+  }
+
+  .floating-label input:focus {
+    border-color: #3498db;
+    background-color: #fff;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+    outline: none;
+  }
+
+  .floating-label input:focus+label,
+  .floating-label input:not(:placeholder-shown)+label {
+    top: -10px;
+    left: 45px;
+    font-size: 0.75rem;
+    background: #fff;
+    padding: 0 5px;
+    color: #3498db;
+  }
+
+  .floating-label input:focus~i {
+    color: #3498db;
+  }
+
+  .profile-image-group {
+    margin-top: 2.5rem;
+  }
+
+  .image-upload-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .image-preview {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 3px solid #ecf0f1;
+    cursor: pointer;
+    margin-bottom: 1rem;
+  }
+
+  .profile-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .image-upload-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .image-preview:hover .image-upload-overlay {
+    opacity: 1;
+  }
+
+  .image-upload-overlay i {
+    font-size: 1.5rem;
+    margin-bottom: 5px;
+  }
+
+  .image-upload-overlay span {
+    font-size: 0.8rem;
+  }
+
+  .image-upload-container input[type="file"] {
+    display: none;
+  }
+
+  .image-upload-info {
+    text-align: center;
+    color: #95a5a6;
+    font-size: 0.85rem;
+  }
+
+  .password-strength {
+    margin-top: 0.5rem;
+    display: flex;
+    align-items: center;
+  }
+
+  .strength-meter {
+    height: 4px;
+    flex-grow: 1;
+    background: #e0e0e0;
+    border-radius: 2px;
+    overflow: hidden;
+    margin-right: 10px;
+  }
+
+  .strength-meter::after {
+    content: '';
+    display: block;
+    height: 100%;
+    width: 0;
+    background: #e74c3c;
+    transition: width 0.3s ease, background 0.3s ease;
+  }
+
+  #strengthText {
+    font-size: 0.75rem;
+    color: #95a5a6;
+  }
+
+  .password-hint {
+    font-size: 0.75rem;
+    color: #95a5a6;
+    margin-top: 0.25rem;
+  }
+
+  .form-actions {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 2.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #ecf0f1;
+  }
+
+  .btn {
+    padding: 0.8rem 1.5rem;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: none;
+  }
+
+  .btn i {
+    margin-right: 8px;
+  }
+
+  .btn-primary {
+    background: #3498db;
+    color: white;
+  }
+
+  .btn-primary:hover {
+    background: #2980b9;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(52, 152, 219, 0.2);
+  }
+
+  .btn-secondary {
+    background: #f8f9fa;
+    color: #34495e;
+    border: 1px solid #e0e0e0;
+  }
+
+  .btn-secondary:hover {
+    background: #ecf0f1;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+  }
+
+  @media (max-width: 768px) {
+    .profile-edit-container {
+      padding: 0 1rem;
+    }
+
+    .profile-edit-card {
+      padding: 1.5rem;
+    }
+
+    .form-actions {
+      flex-direction: column-reverse;
+      gap: 1rem;
+    }
+
+    .btn {
+      width: 100%;
+    }
+  }
+</style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const passwordInput = document.getElementById('password');
+    const strengthMeter = document.querySelector('.strength-meter');
+    const strengthText = document.getElementById('strengthText');
+
+    if (passwordInput && strengthMeter) {
+      passwordInput.addEventListener('input', function () {
+        const password = this.value;
+        let strength = 0;
+
+        if (password.length >= 8) strength += 1;
+        if (password.length >= 12) strength += 1;
+
+        if (password.match(/[a-z]/) && password.match(/[A-Z]/)) strength += 1;
+
+        if (password.match(/\d/)) strength += 1;
+
+        if (password.match(/[^a-zA-Z0-9]/)) strength += 1;
+
+        let width = 0;
+        let color = '#e74c3c';
+        let text = 'Weak';
+
+        switch (strength) {
+          case 0:
+            width = 0;
+            text = 'Weak';
+            break;
+          case 1:
+            width = 25;
+            text = 'Weak';
+            break;
+          case 2:
+            width = 50;
+            color = '#f39c12';
+            text = 'Fair';
+            break;
+          case 3:
+            width = 75;
+            color = '#f39c12';
+            text = 'Good';
+            break;
+          case 4:
+          case 5:
+            width = 100;
+            color = '#2ecc71';
+            text = 'Strong';
+            break;
+        }
+
+        strengthMeter.style.setProperty('--strength-width', width + '%');
+        strengthMeter.style.setProperty('--strength-color', color);
+        strengthMeter.querySelector('::after').style.width = width + '%';
+        strengthMeter.querySelector('::after').style.backgroundColor = color;
+        strengthText.textContent = text;
+        strengthText.style.color = color;
+      });
+    }
+
+    const imageUpload = document.getElementById('imageUpload');
+    const profileImage = document.getElementById('profileImage');
+
+    if (imageUpload && profileImage) {
+      document.querySelector('.image-preview').addEventListener('click', function () {
+        imageUpload.click();
+      });
+
+      imageUpload.addEventListener('change', function (e) {
+        const file = e.target.files[0];
+        if (file) {
+          if (file.size > 2 * 1024 * 1024) {
+            alert('File size exceeds 2MB limit');
+            this.value = '';
+            return;
+          }
+
+          const reader = new FileReader();
+          reader.onload = function (event) {
+            profileImage.src = event.target.result;
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+    }
+
+    const profileForm = document.getElementById('profileForm');
+    if (profileForm) {
+      profileForm.addEventListener('submit', function (e) {
+        const submitButton = this.querySelector('button[type="submit"]');
+        if (submitButton) {
+          submitButton.disabled = true;
+          submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+        }
+      });
+    }
+  });
+</script>
+{% endblock %}

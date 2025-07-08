@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Student Dashboard | University X{% endblock %}</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #3498db;
+      --primary-dark: #2980b9;
+      --secondary: #95a5a6;
+      --light: #f8f9fa;
+      --light-gray: #ecf0f1;
+      --dark: #2c3e50;
+      --darker: #1a252f;
+      --danger: #e74c3c;
+      --success: #2ecc71;
+      --warning: #f39c12;
+      --info: #1abc9c;
+      --white: #ffffff;
+      --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      --shadow-lg: 0 10px 20px rgba(0, 0, 0, 0.15);
+      --transition: all 0.3s ease;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Nunito Sans', sans-serif;
+    }
+
+    body {
+      background-color: var(--light);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      color: var(--dark);
+      line-height: 1.6;
+    }
+
+    /* Improved Navbar */
+    .navbar {
+      background: var(--white);
+      padding: 0.8rem 2rem;
+      box-shadow: var(--shadow);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 1.5rem;
+      align-items: center;
+    }
+
+    .navbar-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--dark);
+      font-weight: 700;
+      font-size: 1.4rem;
+      transition: var(--transition);
+    }
+
+    .navbar-brand:hover {
+      color: var(--primary);
+    }
+
+    .navbar-brand i {
+      font-size: 1.6rem;
+      color: var(--primary);
+    }
+
+    .nav-link {
+      color: var(--dark);
+      text-decoration: none;
+      font-weight: 600;
+      padding: 0.5rem 0;
+      position: relative;
+      transition: var(--transition);
+    }
+
+    .nav-link:hover {
+      color: var(--primary);
+    }
+
+    .nav-link::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 0;
+      height: 2px;
+      background-color: var(--primary);
+      transition: var(--transition);
+    }
+
+    .nav-link:hover::after {
+      width: 100%;
+    }
+
+    .user-profile {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      cursor: pointer;
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .user-info .avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background-color: var(--primary);
+      color: var(--white);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 1rem;
+      transition: var(--transition);
+    }
+
+    .user-profile:hover .avatar {
+      transform: scale(1.1);
+      box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+    }
+
+    .profile-dropdown {
+      position: absolute;
+      top: 100%;
+      right: 0;
+      background: var(--white);
+      border-radius: 8px;
+      box-shadow: var(--shadow-lg);
+      width: 250px;
+      padding: 1rem 0;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(10px);
+      transition: var(--transition);
+      z-index: 1000;
+    }
+
+    .user-profile:hover .profile-dropdown {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+
+    .profile-header {
+      padding: 0 1rem 1rem;
+      border-bottom: 1px solid var(--light-gray);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .profile-header .avatar {
+      width: 50px;
+      height: 50px;
+      font-size: 1.2rem;
+    }
+
+    .profile-header .user-details {
+      flex: 1;
+    }
+
+    .profile-header .user-name {
+      font-weight: 700;
+      margin-bottom: 0.2rem;
+    }
+
+    .profile-header .user-role {
+      font-size: 0.8rem;
+      color: var(--secondary);
+    }
+
+    .profile-menu {
+      list-style: none;
+      padding: 0.5rem 0;
+    }
+
+    .profile-menu li {
+      padding: 0.5rem 1.5rem;
+      transition: var(--transition);
+    }
+
+    .profile-menu li:hover {
+      background-color: var(--light-gray);
+    }
+
+    .profile-menu a {
+      color: var(--dark);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .profile-menu i {
+      width: 20px;
+      text-align: center;
+      color: var(--primary);
+    }
+
+    .profile-footer {
+      padding: 0.5rem 1.5rem;
+      border-top: 1px solid var(--light-gray);
+    }
+
+    .logout-btn {
+      background: none;
+      border: none;
+      color: var(--danger);
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      padding: 0.5rem 0;
+    }
+
+    .main-content {
+      flex: 1;
+      padding: 2rem;
+      max-width: 1400px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .container {
+      width: 100%;
+      padding: 0 15px;
+    }
+
+    /* Enhanced Footer */
+    footer {
+      background: var(--darker);
+      color: var(--white);
+      padding: 3rem 2rem;
+      margin-top: 3rem;
+    }
+
+    .footer-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 2rem;
+    }
+
+    .footer-column h3 {
+      color: var(--white);
+      margin-bottom: 1.5rem;
+      font-size: 1.2rem;
+      position: relative;
+      padding-bottom: 0.5rem;
+    }
+
+    .footer-column h3::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 50px;
+      height: 2px;
+      background-color: var(--primary);
+    }
+
+    .footer-links {
+      list-style: none;
+    }
+
+    .footer-links li {
+      margin-bottom: 0.8rem;
+    }
+
+    .footer-links a {
+      color: var(--light-gray);
+      text-decoration: none;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .footer-links a:hover {
+      color: var(--primary);
+      padding-left: 5px;
+    }
+
+    .footer-links i {
+      font-size: 0.8rem;
+    }
+
+    .social-links {
+      display: flex;
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+
+    .social-links a {
+      color: var(--white);
+      background-color: rgba(255, 255, 255, 0.1);
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: var(--transition);
+    }
+
+    .social-links a:hover {
+      background-color: var(--primary);
+      transform: translateY(-3px);
+    }
+
+    .footer-bottom {
+      text-align: center;
+      padding-top: 2rem;
+      margin-top: 2rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      font-size: 0.9rem;
+      color: var(--secondary);
+    }
+
+    .flash-messages {
+      position: fixed;
+      top: 80px;
+      right: 20px;
+      z-index: 1100;
+      max-width: 400px;
+      width: 100%;
+    }
+
+    .flash-message {
+      padding: 15px;
+      margin-bottom: 10px;
+      border-radius: 8px;
+      color: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: var(--shadow-lg);
+      animation: slideIn 0.3s ease-out;
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    .flash-success {
+      background-color: var(--success);
+    }
+
+    .flash-error {
+      background-color: var(--danger);
+    }
+
+    .flash-warning {
+      background-color: var(--warning);
+    }
+
+    .flash-info {
+      background-color: var(--info);
+    }
+
+    .close-flash {
+      background: none;
+      border: none;
+      color: white;
+      cursor: pointer;
+      font-size: 1.2rem;
+    }
+
+    /* Responsive design */
+    @media (max-width: 992px) {
+      .nav-links {
+        gap: 1rem;
+      }
+
+      .footer-container {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 768px) {
+      .navbar {
+        padding: 0.8rem 1rem;
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      .nav-links {
+        width: 100%;
+        justify-content: space-between;
+      }
+
+      .main-content {
+        padding: 1.5rem;
+      }
+
+      .profile-dropdown {
+        right: -50px;
+      }
+    }
+
+    @media (max-width: 576px) {
+      .footer-container {
+        grid-template-columns: 1fr;
+      }
+
+      .footer-column {
+        text-align: center;
+      }
+
+      .footer-column h3::after {
+        left: 50%;
+        transform: translateX(-50%);
+      }
+
+      .social-links {
+        justify-content: center;
+      }
+    }
+
+    .avatar.profile-image {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    .profile-header .profile-image {
+      width: 50px;
+      height: 50px;
+    }
+
+    .footer-logo {
+      display: flex;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .footer-logo i {
+      font-size: 2rem;
+      margin-right: 1rem;
+      color: var(--gold);
+    }
+
+    .footer-logo-text {
+      font-size: 1.5rem;
+      font-weight: 800;
+    }
+
+    .footer-about {
+      margin-bottom: 1.5rem;
+      line-height: 1.6;
+      opacity: 0.9;
+    }
+  </style>
+  {% block extra_css %}{% endblock %}
+</head>
+
+<body>
+  <nav class="navbar">
+    <a href="{{ url_for('student.dashboard') }}" class="navbar-brand">
+      <i class="fas fa-graduation-cap"></i>
+      <span>Student Portal</span>
+    </a>
+
+    <div class="nav-links">
+      <a href="{{ url_for('auth.home') }}" class="nav-link">
+        <i class="fas fa-home"></i> Dashboard
+      </a>
+
+      <a href="{{ url_for('student.select_subjects') }}" class="nav-link">
+        <i class="fas fa-book"></i> Subjects
+      </a>
+      <a href="{{ url_for('student.view_schedule') }}" class="nav-link">
+        <i class="fas fa-calendar-alt"></i> Schedule
+      </a>
+      <a href="{{ url_for('student.quizzes') }}" class="nav-link">
+        <i class="fas fa-question-circle"></i> Quizzes
+      </a>
+
+      <a href="{{ url_for('student.grades') }}" class="nav-link">
+        <i class="fas fa-chart-line"></i> Grades
+      </a>
+
+      <a href="{{ url_for('student.pay_fees') }}" class="nav-link">
+        <i class="fas fa-chart-line"></i> Pay Fees
+      </a>
+
+
+
+      <a href="{{ url_for('student.exam_rooms') }}" class="nav-link">
+        <i class="fas fa-university"></i> Exams
+      </a>
+
+      <div class="user-profile">
+        <div class="user-info">
+          {% if user.profile_image %}
+          <img src="{{ url_for('static', filename='uploads/' + user.profile_image) }}" class="avatar profile-image">
+          {% else %}
+          <div class="avatar">{{ user.name|first|upper }}</div>
+          {% endif %}
+          <span>{{ user.name }}</span>
+        </div>
+
+        <div class="profile-dropdown">
+          <div class="profile-header">
+            {% if user.profile_image %}
+            <img src="{{ url_for('static', filename='uploads/' + user.profile_image) }}" class="avatar profile-image">
+            {% else %}
+            <div class="avatar">{{ user.name|first|upper }}</div>
+            {% endif %}
+            <div class="user-details">
+              <div class="user-name">{{ user.name }}</div>
+              <div class="user-role">Student</div>
+            </div>
+          </div>
+
+          <ul class="profile-menu">
+            <li>
+              <a href="{{ url_for('student.edit_profile') }}">
+                <i class="fas fa-user-circle"></i> My Profile
+              </a>
+            </li>
+            <li>
+              <a href="{{('student.settings') }}">
+                <i class="fas fa-cog"></i> Settings
+              </a>
+            </li>
+            <li>
+              <a href="{{('student.notifications') }}">
+                <i class="fas fa-bell"></i> Notifications
+                <span class="badge"
+                  style="margin-left: auto; background: var(--danger); color: white; border-radius: 10px; padding: 0.1rem 0.5rem; font-size: 0.7rem;">3</span>
+              </a>
+            </li>
+          </ul>
+
+          <div class="profile-footer">
+            <button class="logout-btn" onclick="window.location.href='{{ url_for('student.logout') }}'">
+              <i class="fas fa-sign-out-alt"></i> Logout
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <div class="flash-messages">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+    <div class="flash-message flash-{{ category }}">
+      <span>{{ message }}</span>
+      <button class="close-flash">&times;</button>
+    </div>
+    {% endfor %}
+    {% endwith %}
+  </div>
+
+  <main class="main-content">
+    <div class="container">
+      {% block content %}{% endblock %}
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-container">
+      <div class="footer-column">
+        <div class="footer-logo">
+          <i class="fas fa-university"></i>
+          <div class="footer-logo-text">UNIVERSITY X</div>
+        </div>
+        <p class="footer-about">
+          University X is a premier institution committed to excellence in education, research, and innovation.
+          Our admin portal provides comprehensive tools for managing university operations.
+        </p>
+        <div class="footer-contact">
+          <p><i class="fas fa-map-marker-alt"></i> 123 University Avenue, City, Country</p>
+          <p><i class="fas fa-phone"></i> +1 (234) 567-8900</p>
+          <p><i class="fas fa-envelope"></i> info@universityx.edu</p>
+        </div>
+      </div>
+
+      <div class="footer-column">
+        <h3 class="footer-title">Quick Links</h3>
+        <ul class="footer-links">
+          <li><a href="{{ url_for('auth.home') }}"><i class="fas fa-home"></i> Home</a></li>
+          <li><a href="{{ ('student.dashboard') }}"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+          <li><a href="{{ url_for('student.select_subjects') }}"><i class="fas fa-book"></i> Courses</a></li>
+          <li><a href="{{ url_for('student.grades') }}"><i class="fas fa-chart-bar"></i> Grades</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-column">
+        <h3 class="footer-title">Resources</h3>
+        <ul class="footer-links">
+          <li><a href="{{ ('main.library') }}"><i class="fas fa-book-open"></i> Library</a></li>
+          <li><a href="{{('main.calendar') }}"><i class="fas fa-calendar"></i> Academic Calendar</a></li>
+          <li><a href="{{ ('main.handbook') }}"><i class="fas fa-file-alt"></i> Student Handbook</a></li>
+          <li><a href="{{ ('main.faq') }}"><i class="fas fa-question-circle"></i> FAQ</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-column">
+        <h3 class="footer-title">Connect With Us</h3>
+        <div class="social-links">
+          <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+          <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+          <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+          <a href="#" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+          <a href="#" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+        </div>
+
+        <h3 class="footer-title" style="margin-top: 1.5rem;">Newsletter</h3>
+        <form class="newsletter-form">
+          <input type="email" placeholder="Your email" required>
+          <button type="submit">
+            <i class="fas fa-paper-plane"></i>
+          </button>
+        </form>
+
+        <div class="support-links" style="margin-top: 1.5rem;">
+          <h3 class="footer-title">Support</h3>
+          <ul class="footer-links">
+            <li><a href="{{ ('main.contact') }}"><i class="fas fa-envelope"></i> Contact Us</a></li>
+            <li><a href="{{('main.help') }}"><i class="fas fa-life-ring"></i> Help Center</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <p>&copy; 2025 University X - Student Portal. All rights reserved.</p>
+      <div class="legal-links">
+        <a href="{{ ('main.privacy') }}">Privacy Policy</a>
+        <span>|</span>
+        <a href="{{('main.terms') }}">Terms of Service</a>
+        <span>|</span>
+        <a href="{{ ('main.accessibility') }}">Accessibility</a>
+      </div>
+    </div>
+  </footer>
+
+  <style>
+    .footer {
+      background-color: var(--dark);
+      color: var(--light);
+      padding: 3rem 0 0;
+      font-size: 0.95rem;
+      line-height: 1.6;
+    }
+
+    .footer-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 2rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 2.5rem;
+    }
+
+    .footer-column {
+      margin-bottom: 2rem;
+    }
+
+    .footer-logo {
+      display: flex;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .footer-logo i {
+      font-size: 2.2rem;
+      color: var(--primary);
+      margin-right: 0.8rem;
+    }
+
+    .footer-logo-text {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: white;
+    }
+
+    .footer-about {
+      color: var(--gray);
+      margin-bottom: 1.5rem;
+    }
+
+    .footer-contact p {
+      color: var(--gray);
+      margin-bottom: 0.8rem;
+      display: flex;
+      align-items: center;
+    }
+
+    .footer-contact i {
+      margin-right: 0.8rem;
+      color: var(--primary);
+      width: 20px;
+      text-align: center;
+    }
+
+    .footer-title {
+      font-size: 1.1rem;
+      color: white;
+      margin-bottom: 1.5rem;
+      position: relative;
+      padding-bottom: 0.5rem;
+    }
+
+    .footer-title:after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 40px;
+      height: 2px;
+      background-color: var(--primary);
+    }
+
+    .footer-links {
+      list-style: none;
+    }
+
+    .footer-links li {
+      margin-bottom: 0.8rem;
+    }
+
+    .footer-links a {
+      color: var(--gray);
+      text-decoration: none;
+      transition: color 0.3s;
+      display: flex;
+      align-items: center;
+    }
+
+    .footer-links a:hover {
+      color: var(--primary);
+    }
+
+    .footer-links i {
+      margin-right: 0.8rem;
+      color: var(--primary);
+      width: 20px;
+      text-align: center;
+    }
+
+    .social-links {
+      display: flex;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .social-links a {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background-color: rgba(255, 255, 255, 0.1);
+      color: white;
+      transition: all 0.3s;
+    }
+
+    .social-links a:hover {
+      background-color: var(--primary);
+      transform: translateY(-3px);
+    }
+
+    .newsletter-form {
+      display: flex;
+      margin-top: 1rem;
+    }
+
+    .newsletter-form input {
+      flex: 1;
+      padding: 0.6rem 1rem;
+      border: none;
+      border-radius: 4px 0 0 4px;
+      background-color: rgba(255, 255, 255, 0.1);
+      color: white;
+    }
+
+    .newsletter-form input::placeholder {
+      color: var(--gray);
+    }
+
+    .newsletter-form button {
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      padding: 0 1.2rem;
+      border-radius: 0 4px 4px 0;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    .newsletter-form button:hover {
+      background-color: var(--primary-dark);
+    }
+
+    .footer-bottom {
+      background-color: rgba(0, 0, 0, 0.2);
+      padding: 1.5rem 0;
+      text-align: center;
+      margin-top: 2rem;
+    }
+
+    .footer-bottom p {
+      color: var(--gray);
+      margin-bottom: 0.5rem;
+    }
+
+    .legal-links {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 0.8rem;
+    }
+
+    .legal-links a {
+      color: var(--gray);
+      text-decoration: none;
+      transition: color 0.3s;
+    }
+
+    .legal-links a:hover {
+      color: var(--primary);
+    }
+
+    .legal-links span {
+      color: var(--gray);
+    }
+
+    @media (max-width: 768px) {
+      .footer-container {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+      }
+
+      .footer-column {
+        margin-bottom: 1.5rem;
+      }
+
+      .footer-logo {
+        justify-content: center;
+        text-align: center;
+        flex-direction: column;
+      }
+
+      .footer-logo i {
+        margin-right: 0;
+        margin-bottom: 0.5rem;
+      }
+
+      .footer-about,
+      .footer-contact {
+        text-align: center;
+      }
+
+      .footer-title {
+        text-align: center;
+      }
+
+      .footer-title:after {
+        left: 50%;
+        transform: translateX(-50%);
+      }
+
+      .social-links {
+        justify-content: center;
+      }
+    }
+  </style>
+  <script>
+    document.querySelectorAll('.close-flash').forEach(button => {
+      button.addEventListener('click', (e) => {
+        e.target.closest('.flash-message').style.opacity = '0';
+        setTimeout(() => {
+          e.target.closest('.flash-message').remove();
+        }, 300);
+      });
+    });
+
+    setTimeout(() => {
+      document.querySelectorAll('.flash-message').forEach(message => {
+        message.style.opacity = '0';
+        setTimeout(() => {
+          message.remove();
+        }, 300);
+      });
+    }, 5000);
+
+    document.querySelector('.user-profile').addEventListener('click', function (e) {
+      if (window.innerWidth <= 768) {
+        e.preventDefault();
+        const dropdown = this.querySelector('.profile-dropdown');
+        const isVisible = dropdown.style.opacity === '1';
+
+        document.querySelectorAll('.profile-dropdown').forEach(d => {
+          d.style.opacity = '0';
+          d.style.visibility = 'hidden';
+          d.style.transform = 'translateY(10px)';
+        });
+
+        if (!isVisible) {
+          dropdown.style.opacity = '1';
+          dropdown.style.visibility = 'visible';
+          dropdown.style.transform = 'translateY(0)';
+        }
+      }
+    });
+
+    document.addEventListener('click', function (e) {
+      if (!e.target.closest('.user-profile')) {
+        document.querySelectorAll('.profile-dropdown').forEach(dropdown => {
+          dropdown.style.opacity = '0';
+          dropdown.style.visibility = 'hidden';
+          dropdown.style.transform = 'translateY(10px)';
+        });
+      }
+    });
+  </script>
+
+  {% block extra_js %}{% endblock %}
+</body>
+
+</html>

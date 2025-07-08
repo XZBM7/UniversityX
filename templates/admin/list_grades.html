@@ -1,0 +1,481 @@
+{% extends "admin/base.html" %}
+
+{% block content %}
+<div class="grades-container">
+    <div class="grades-header">
+        <h1 class="grades-title">
+            <i class="fas fa-graduation-cap"></i> Grades Management
+        </h1>
+        <div class="header-actions">
+            <a href="{{ url_for('admin.add_grade') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Add New Grade
+            </a>
+            <a href="{{ url_for('admin.dashboard') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <div class="search-container">
+        <div class="search-box">
+            <i class="fas fa-search"></i>
+            <input type="text" id="gradeSearch" placeholder="Search by student name or ID..." class="search-input">
+        </div>
+    </div>
+
+    <div class="grades-card">
+        {% if grades %}
+        <div class="table-responsive">
+            <table class="grades-table" id="gradesTable">
+                <thead>
+                    <tr>
+                        <th><i class="fas fa-id-card"></i> Student ID</th>
+                        <th><i class="fas fa-user"></i> Student</th>
+                        <th><i class="fas fa-book"></i> Subject</th>
+                        <th><i class="fas fa-star"></i> Grade</th>
+                        <th><i class="fas fa-cog"></i> Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for grade in grades %}
+                    <tr>
+                        <td>{{ grade.university_id }}</td>
+                        <td>{{ grade.student_name }}</td>
+                        <td>{{ grade.subject_name }}</td>
+                        <td>
+                            <span class="grade-badge grade-{{ grade.grade|lower }}">
+                                {{ grade.grade }}
+                            </span>
+                        </td>
+                        <td class="action-buttons">
+                            <a href="{{ url_for('admin.edit_grade', id=grade._id) }}" class="btn-action btn-edit">
+                                <i class="fas fa-edit"></i> Edit
+                            </a>
+                            <a href="{{ url_for('admin.delete_grade', id=grade._id) }}" class="btn-action btn-delete"
+                                onclick="return confirmDeletion('grade', '{{ grade.student_name }} in {{ grade.subject_name }}')">
+                                <i class="fas fa-trash-alt"></i> Delete
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <img src="{{ url_for('static', filename='images/empty-grades.svg') }}" alt="No grades" class="empty-image">
+            <h3>No Grades Found</h3>
+            <p>There are currently no grades recorded. Add your first grade to get started.</p>
+            <a href="{{ url_for('admin.add_grade') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Add Grade
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+    {% if grades %}
+    <div class="grades-footer">
+        <div class="grades-summary">
+            <div class="summary-card">
+                <span class="summary-value">{{ grades|length }}</span>
+                <span class="summary-label">Total Grades</span>
+            </div>
+            <div class="summary-card">
+                <span class="summary-value">{{ (grades|map(attribute='grade')|map('float')|sum / grades|length)|round(2)
+                    if grades|length > 0 else 0 }}</span>
+                <span class="summary-label">Average Grade</span>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    :root {
+        --primary: #4361ee;
+        --primary-dark: #3a56d4;
+        --secondary: #3f37c9;
+        --success: #4cc9f0;
+        --danger: #f72585;
+        --warning: #f8961e;
+        --info: #4895ef;
+        --light: #f8f9fa;
+        --dark: #212529;
+        --gray: #6c757d;
+        --white: #ffffff;
+    }
+
+    .grades-container {
+        max-width: 1200px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+    }
+
+    .grades-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .grades-title {
+        font-size: 2rem;
+        color: var(--dark);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .grades-title i {
+        color: var(--primary);
+    }
+
+    .header-actions {
+        display: flex;
+        gap: 1rem;
+    }
+
+    .search-container {
+        margin-bottom: 1.5rem;
+    }
+
+    .search-box {
+        position: relative;
+        max-width: 500px;
+    }
+
+    .search-box i {
+        position: absolute;
+        left: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--gray);
+    }
+
+    .search-input {
+        width: 100%;
+        padding: 0.75rem 1rem 0.75rem 2.5rem;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .search-input:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+    }
+
+    .grades-card {
+        background-color: var(--white);
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+        margin-bottom: 2rem;
+    }
+
+    .table-responsive {
+        overflow-x: auto;
+    }
+
+    .grades-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.95rem;
+    }
+
+    .grades-table thead {
+        background-color: var(--primary);
+        color: var(--white);
+    }
+
+    .grades-table th {
+        padding: 1.25rem 1.5rem;
+        text-align: left;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.8rem;
+        letter-spacing: 0.5px;
+    }
+
+    .grades-table th i {
+        margin-right: 8px;
+    }
+
+    .grades-table td {
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        vertical-align: middle;
+    }
+
+    .grades-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .grades-table tbody tr:hover {
+        background-color: rgba(67, 97, 238, 0.05);
+    }
+
+    .grade-badge {
+        display: inline-block;
+        padding: 0.35rem 0.75rem;
+        border-radius: 50px;
+        font-weight: 600;
+        font-size: 0.85rem;
+        min-width: 50px;
+        text-align: center;
+    }
+
+    .grade-a {
+        background-color: #4ade80;
+        color: #166534;
+    }
+
+    .grade-b {
+        background-color: #a3e635;
+        color: #3f6212;
+    }
+
+    .grade-c {
+        background-color: #facc15;
+        color: #854d0e;
+    }
+
+    .grade-d {
+        background-color: #fb923c;
+        color: #9a3412;
+    }
+
+    .grade-f {
+        background-color: #f87171;
+        color: #991b1b;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 0.75rem;
+    }
+
+    .btn-action {
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        text-decoration: none;
+        transition: all 0.2s ease;
+    }
+
+    .btn-action i {
+        font-size: 0.9rem;
+    }
+
+    .btn-edit {
+        background-color: rgba(72, 149, 239, 0.1);
+        color: var(--info);
+        border: 1px solid rgba(72, 149, 239, 0.3);
+    }
+
+    .btn-edit:hover {
+        background-color: rgba(72, 149, 239, 0.2);
+    }
+
+    .btn-delete {
+        background-color: rgba(247, 37, 133, 0.1);
+        color: var(--danger);
+        border: 1px solid rgba(247, 37, 133, 0.3);
+    }
+
+    .btn-delete:hover {
+        background-color: rgba(247, 37, 133, 0.2);
+    }
+
+    .empty-state {
+        padding: 3rem 2rem;
+        text-align: center;
+    }
+
+    .empty-image {
+        max-width: 280px;
+        margin-bottom: 1.5rem;
+        opacity: 0.8;
+    }
+
+    .empty-state h3 {
+        color: var(--dark);
+        margin-bottom: 0.5rem;
+    }
+
+    .empty-state p {
+        color: var(--gray);
+        margin-bottom: 1.5rem;
+        max-width: 500px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .grades-footer {
+        margin-top: 1.5rem;
+    }
+
+    .grades-summary {
+        display: flex;
+        gap: 1.5rem;
+    }
+
+    .summary-card {
+        background-color: var(--white);
+        border-radius: 10px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        flex: 1;
+        text-align: center;
+    }
+
+    .summary-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--primary);
+        display: block;
+        line-height: 1;
+    }
+
+    .summary-label {
+        font-size: 0.9rem;
+        color: var(--gray);
+        margin-top: 0.5rem;
+        display: block;
+    }
+
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 500;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        border: none;
+        cursor: pointer;
+        font-size: 0.95rem;
+    }
+
+    .btn i {
+        font-size: 0.9rem;
+    }
+
+    .btn-primary {
+        background-color: var(--primary);
+        color: var(--white);
+    }
+
+    .btn-primary:hover {
+        background-color: var(--primary-dark);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(67, 97, 238, 0.2);
+    }
+
+    .btn-secondary {
+        background-color: var(--light);
+        color: var(--dark);
+    }
+
+    .btn-secondary:hover {
+        background-color: #e9ecef;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+
+    @media (max-width: 768px) {
+        .grades-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .header-actions {
+            width: 100%;
+            flex-direction: column;
+        }
+
+        .grades-table th,
+        .grades-table td {
+            padding: 1rem;
+        }
+
+        .action-buttons {
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .grades-summary {
+            flex-direction: column;
+        }
+    }
+</style>
+
+<script>
+    function confirmDeletion(type, item) {
+        return confirm(`Are you sure you want to delete the ${type} for ${item}? This action cannot be undone.`);
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const searchInput = document.getElementById('gradeSearch');
+        const gradesTable = document.getElementById('gradesTable');
+
+        if (searchInput && gradesTable) {
+            searchInput.addEventListener('input', function () {
+                const searchTerm = this.value.toLowerCase();
+                const rows = gradesTable.querySelectorAll('tbody tr');
+
+                rows.forEach(row => {
+                    const studentId = row.cells[0].textContent.toLowerCase();
+                    const studentName = row.cells[1].textContent.toLowerCase();
+
+                    if (studentId.includes(searchTerm) || studentName.includes(searchTerm)) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+            });
+        }
+
+        const rows = document.querySelectorAll('.grades-table tbody tr');
+        rows.forEach((row, index) => {
+            row.style.opacity = '0';
+            row.style.transform = 'translateY(20px)';
+            row.style.animation = `fadeInUp 0.4s ease forwards ${index * 0.05}s`;
+        });
+
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fadeInUp {
+                from { opacity: 0; transform: translateY(20px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+        `;
+        document.head.appendChild(style);
+
+        const cards = document.querySelectorAll('.grades-card, .summary-card');
+        cards.forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                card.style.transform = 'translateY(-5px)';
+                card.style.boxShadow = '0 10px 25px rgba(0, 0, 0, 0.1)';
+            });
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = '';
+                card.style.boxShadow = '';
+            });
+        });
+    });
+</script>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+{% endblock %}

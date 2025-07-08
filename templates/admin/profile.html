@@ -1,0 +1,371 @@
+{% extends "admin/base.html" %}
+
+{% block extra_css %}
+<style>
+    .profile-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    .profile-card {
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+
+    .profile-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+    }
+
+    .profile-header {
+        background: linear-gradient(135deg, #2c3e50 0%, #4ca1af 100%);
+        color: white;
+        padding: 2rem;
+        text-align: center;
+    }
+
+    .avatar {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.5rem;
+        font-size: 3.5rem;
+        font-weight: bold;
+        color: white;
+        border: 4px solid white;
+    }
+
+    .profile-body {
+        padding: 2.5rem;
+        background: white;
+    }
+
+    .form-group {
+        margin-bottom: 1.8rem;
+    }
+
+    .form-control {
+        border-radius: 8px;
+        padding: 12px 15px;
+        border: 1px solid #e0e0e0;
+        transition: all 0.3s;
+    }
+
+    .form-control:focus {
+        border-color: #4ca1af;
+        box-shadow: 0 0 0 0.2rem rgba(76, 161, 175, 0.25);
+    }
+
+    .btn-save {
+        background: linear-gradient(135deg, #2c3e50 0%, #4ca1af 100%);
+        border: none;
+        padding: 12px 30px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        border-radius: 8px;
+        transition: all 0.3s;
+    }
+
+    .btn-save:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(44, 62, 80, 0.3);
+    }
+
+    .password-section {
+        background: #f9f9f9;
+        padding: 1.5rem;
+        border-radius: 10px;
+        margin-top: 2rem;
+    }
+
+    .section-title {
+        color: #2c3e50;
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+        position: relative;
+        padding-bottom: 10px;
+    }
+
+    .section-title:after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 50px;
+        height: 3px;
+        background: linear-gradient(135deg, #2c3e50 0%, #4ca1af 100%);
+    }
+
+    .stats-card {
+        background: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        margin-bottom: 1.5rem;
+        transition: all 0.3s;
+    }
+
+    .stats-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    }
+
+    .stats-icon {
+        font-size: 2.5rem;
+        color: #4ca1af;
+        margin-bottom: 1rem;
+    }
+
+    @media (max-width: 768px) {
+        .profile-body {
+            padding: 1.5rem;
+        }
+
+        .avatar {
+            width: 100px;
+            height: 100px;
+            font-size: 2.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="profile-container">
+    <div class="page-header">
+        <h1 class="page-title">
+            <i class="fas fa-user-cog"></i>
+            My Profile
+        </h1>
+    </div>
+
+    <div class="row">
+        <div class="col-md-4">
+            <div class="profile-card">
+                <div class="profile-header">
+                    <div class="avatar">{{ admin.name|first|upper }}</div>
+                    <h3>{{ admin.name }}</h3>
+                    <p class="text-light">{{ admin.email }}</p>
+                    <span class="badge bg-primary">
+                        <i class="fas fa-shield-alt"></i> Administrator
+                    </span>
+                </div>
+                <div class="card-body">
+                    <div class="stats-card">
+                        <div class="stats-icon">
+                            <i class="fas fa-calendar-alt"></i>
+                        </div>
+                        <h5>Last Login</h5>
+                        <p class="text-muted" id="last-login">Loading...</p>
+                    </div>
+                    <div class="stats-card">
+                        <div class="stats-icon">
+                            <i class="fas fa-user-edit"></i>
+                        </div>
+                        <h5>Profile Completion</h5>
+                        <div class="progress mt-2" style="height: 8px;">
+                            <div class="progress-bar bg-success" id="profile-completion" role="progressbar"
+                                style="width: 85%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <div class="profile-card">
+                <div class="profile-body">
+                    <form id="profile-form" method="POST" action="{{ url_for('admin.admin_profile') }}">
+                        <h4 class="section-title">Basic Information</h4>
+
+                        <div class="form-group">
+                            <label for="name" class="form-label">Full Name</label>
+                            <input type="text" class="form-control" id="name" name="name" value="{{ admin.name }}"
+                                required>
+                            <div class="invalid-feedback">Please provide your name</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="email" class="form-label">Email Address</label>
+                            <input type="email" class="form-control" id="email" name="email" value="{{ admin.email }}"
+                                required>
+                            <div class="invalid-feedback">Please provide a valid email</div>
+                        </div>
+
+                        <div class="password-section">
+                            <h4 class="section-title">Password Settings</h4>
+                            <p class="text-muted mb-3">Leave blank to keep current password</p>
+
+                            <div class="form-group">
+                                <label for="current_password" class="form-label">Current Password</label>
+                                <input type="password" class="form-control" id="current_password"
+                                    name="current_password">
+                                <div class="invalid-feedback"></div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="new_password" class="form-label">New Password</label>
+                                <input type="password" class="form-control" id="new_password" name="new_password">
+                                <div class="invalid-feedback"></div>
+                                <small class="form-text text-muted">Minimum 8 characters</small>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="confirm_password" class="form-label">Confirm New Password</label>
+                                <input type="password" class="form-control" id="confirm_password"
+                                    name="confirm_password">
+                                <div class="invalid-feedback"></div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end mt-4">
+                            <button type="submit" class="btn btn-save text-white">
+                                <i class="fas fa-save me-2"></i> Save Changes
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const lastLogin = document.getElementById('last-login');
+        const now = new Date();
+        lastLogin.textContent = now.toLocaleString();
+
+        const form = document.getElementById('profile-form');
+        const currentPassword = document.getElementById('current_password');
+        const newPassword = document.getElementById('new_password');
+        const confirmPassword = document.getElementById('confirm_password');
+
+        form.addEventListener('submit', function (e) {
+            let isValid = true;
+
+            form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+
+            if (!form.name.value.trim()) {
+                form.name.classList.add('is-invalid');
+                isValid = false;
+            }
+
+            if (!form.email.value.trim() || !/^\S+@\S+\.\S+$/.test(form.email.value)) {
+                form.email.classList.add('is-invalid');
+                isValid = false;
+            }
+
+            if (currentPassword.value || newPassword.value || confirmPassword.value) {
+                if (!currentPassword.value) {
+                    currentPassword.classList.add('is-invalid');
+                    currentPassword.nextElementSibling.textContent = 'Current password is required';
+                    isValid = false;
+                }
+
+                if (!newPassword.value) {
+                    newPassword.classList.add('is-invalid');
+                    newPassword.nextElementSibling.textContent = 'New password is required';
+                    isValid = false;
+                } else if (newPassword.value.length < 8) {
+                    newPassword.classList.add('is-invalid');
+                    newPassword.nextElementSibling.textContent = 'Password must be at least 8 characters';
+                    isValid = false;
+                }
+
+                if (!confirmPassword.value) {
+                    confirmPassword.classList.add('is-invalid');
+                    confirmPassword.nextElementSibling.textContent = 'Please confirm your new password';
+                    isValid = false;
+                } else if (newPassword.value !== confirmPassword.value) {
+                    confirmPassword.classList.add('is-invalid');
+                    confirmPassword.nextElementSibling.textContent = 'Passwords do not match';
+                    isValid = false;
+                }
+            }
+
+            if (!isValid) {
+                e.preventDefault();
+
+                const firstInvalid = form.querySelector('.is-invalid');
+                if (firstInvalid) {
+                    firstInvalid.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'center'
+                    });
+                    firstInvalid.focus();
+                }
+            }
+        });
+
+        newPassword.addEventListener('input', function () {
+            const strengthIndicator = document.createElement('div');
+            strengthIndicator.className = 'password-strength mt-2';
+
+            const strength = calculatePasswordStrength(this.value);
+            let strengthText = '';
+            let strengthClass = '';
+
+            switch (strength) {
+                case 0:
+                case 1:
+                    strengthText = 'Weak';
+                    strengthClass = 'text-danger';
+                    break;
+                case 2:
+                    strengthText = 'Moderate';
+                    strengthClass = 'text-warning';
+                    break;
+                case 3:
+                case 4:
+                    strengthText = 'Strong';
+                    strengthClass = 'text-success';
+                    break;
+            }
+
+            const existingIndicator = this.parentNode.querySelector('.password-strength');
+            if (existingIndicator) {
+                existingIndicator.remove();
+            }
+
+            if (this.value) {
+                strengthIndicator.innerHTML = `Strength: <span class="${strengthClass}">${strengthText}</span>`;
+                this.parentNode.appendChild(strengthIndicator);
+            }
+        });
+
+        function calculatePasswordStrength(password) {
+            let strength = 0;
+
+            if (password.length >= 8) strength++;
+            if (password.length >= 12) strength++;
+            if (/[A-Z]/.test(password)) strength++;
+            if (/[0-9]/.test(password)) strength++;
+            if (/[^A-Za-z0-9]/.test(password)) strength++;
+
+            return Math.min(strength, 4);
+        }
+
+        const completionElement = document.getElementById('profile-completion');
+        let width = 0;
+        const targetWidth = admin.email && admin.name ? 85 : 50;
+        const animation = setInterval(() => {
+            if (width >= targetWidth) {
+                clearInterval(animation);
+            } else {
+                width++;
+                completionElement.style.width = width + '%';
+            }
+        }, 10);
+    });
+</script>
+{% endblock %}

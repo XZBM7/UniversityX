@@ -1,0 +1,643 @@
+{% extends "admin/base.html" %}
+
+{% block content %}
+<div class="exam-rooms-container">
+    <div class="exam-rooms-header">
+        <h1 class="exam-rooms-title">
+            <i class="fas fa-door-open"></i> Exam Rooms Schedule
+        </h1>
+        <div class="header-actions">
+            <a href="{{ url_for('admin.add_exam_room') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Add Exam Room
+            </a>
+            <a href="{{ url_for('admin.dashboard') }}" class="btn btn-secondary">
+                <i class="fas fa-home"></i> Dashboard
+            </a>
+        </div>
+    </div>
+
+    <div class="exam-rooms-card">
+        <div class="search-container">
+            <div class="filters-row">
+                <div class="filter-group">
+                    <label for="dayFilter"><i class="fas fa-calendar-day"></i> Filter by Day:</label>
+                    <select id="dayFilter" class="form-control">
+                        <option value="all">All Days</option>
+                        <option value="Sunday">Sunday</option>
+                        <option value="Monday">Monday</option>
+                        <option value="Tuesday">Tuesday</option>
+                        <option value="Wednesday">Wednesday</option>
+                        <option value="Thursday">Thursday</option>
+                        <option value="Friday">Friday</option>
+                        <option value="Saturday">Saturday</option>
+                    </select>
+                </div>
+                <div class="search-box">
+                    <div class="search-input-container">
+                        <input type="text" id="searchInput" placeholder="Search by subject, time or room..."
+                            class="search-input">
+                        <i class="fas fa-search search-icon"></i>
+                    </div>
+                    <button id="resetBtn" class="btn btn-secondary">
+                        <i class="fas fa-sync-alt"></i> Reset
+                    </button>
+                </div>
+            </div>
+        </div>
+
+      {% if exam_rooms %}
+        <div class="table-responsive">
+            <table class="exam-rooms-table">
+                <thead>
+                    <tr>
+                        <th><i class="fas fa-book"></i> Subject</th>
+                        <th><i class="fas fa-calendar-alt"></i> Date</th>
+                        <th><i class="fas fa-calendar-day"></i> Day</th>
+                        <th><i class="fas fa-clock"></i> Time</th>
+                        <th><i class="fas fa-door-closed"></i> Room</th>
+                        <th><i class="fas fa-cog"></i> Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="examRoomsTableBody">
+                    {% for exam_room in exam_rooms %}
+                    <tr class="exam-room-row" data-day="{{ exam_room.day }}" 
+                        data-date="{{ exam_room.exam_date.strftime('%Y-%m-%d') if exam_room.exam_date else '' }}">
+                        <td class="subject-name">{{ exam_room.subject_name }}</td>
+                        <td class="exam-date">
+                            {% if exam_room.exam_date %}
+                            {{ exam_room.exam_date.strftime('%Y-%m-%d') }}
+                            {% else %}
+                            Not set
+                            {% endif %}
+                        </td>
+                        <td class="exam-day">{{ exam_room.day }}</td>
+                        <td class="exam-time">{{ exam_room.time.strftime('%I:%M %p') if exam_room.time is not string
+                            else exam_room.time }}</td>
+                        <td class="room-number">
+                            <span class="room-badge">{{ exam_room.room }}</span>
+                        </td>
+
+                        <td class="action-buttons">
+                            <a href="{{ url_for('admin.edit_exam_room', id=exam_room._id) }}"
+                                class="btn-action btn-edit" title="Edit">
+                                <i class="fas fa-pencil-alt"></i>
+                            </a>
+                            <a href="{{ url_for('admin.delete_exam_room', id=exam_room._id) }}"
+                                class="btn-action btn-delete" title="Delete"
+                                onclick="return confirm('Are you sure you want to delete this exam room assignment?')">
+                                <i class="fas fa-trash"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <img src="{{ url_for('static', filename='images/empty-exam.svg') }}" alt="No exam rooms"
+                class="empty-image">
+            <h3>No Exam Rooms Scheduled</h3>
+            <p>There are currently no exam rooms assigned. Add your first exam room to get started.</p>
+            <a href="{{ url_for('admin.add_exam_room') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Add Exam Room
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+    {% if exam_rooms %}
+    <div class="exam-summary">
+        <div class="summary-card">
+            <span class="summary-value">{{ exam_rooms|length }}</span>
+            <span class="summary-label">Total Scheduled Exams</span>
+        </div>
+        <div class="summary-card">
+            <span class="summary-value">{{ exam_rooms|map(attribute='room')|list|unique|list|length }}</span>
+            <span class="summary-label">Rooms Used</span>
+        </div>
+        <div class="summary-card">
+            <span class="summary-value" id="filteredCount">{{ exam_rooms|length }}</span>
+            <span class="summary-label">Currently Showing</span>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    :root {
+        --primary: #4361ee;
+        --primary-dark: #3a56d4;
+        --secondary: #3f37c9;
+        --success: #4cc9f0;
+        --danger: #f72585;
+        --warning: #f8961e;
+        --info: #4895ef;
+        --light: #f8f9fa;
+        --dark: #212529;
+        --gray: #6c757d;
+        --white: #ffffff;
+    }
+
+    .exam-rooms-container {
+        max-width: 1200px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+    }
+
+
+    .exam-date {
+        white-space: nowrap;
+        color: var(--dark);
+        font-weight: 500;
+    }
+
+    .exam-rooms-table th:nth-child(2),
+    .exam-rooms-table td:nth-child(2) {
+        min-width: 120px;
+    }
+
+    .exam-date {
+        position: relative;
+        padding-left: 1.75rem;
+    }
+
+    .exam-date::before {
+        content: '\f073';
+        font-family: 'Font Awesome 6 Free';
+        font-weight: 900;
+        position: absolute;
+        left: 0.5rem;
+        color: var(--info);
+    }
+
+    @media (max-width: 768px) {
+        .exam-rooms-table th:nth-child(2),
+        .exam-rooms-table td:nth-child(2) {
+            display: none;
+        }
+    }
+
+    .exam-rooms-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .exam-rooms-title {
+        font-size: 2rem;
+        color: var(--dark);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .exam-rooms-title i {
+        color: var(--primary);
+    }
+
+    .header-actions {
+        display: flex;
+        gap: 1rem;
+    }
+
+    .exam-rooms-card {
+        background-color: var(--white);
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+        margin-bottom: 2rem;
+    }
+
+    .search-container {
+        padding: 1.5rem;
+    }
+
+    .filters-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+        align-items: center;
+    }
+
+    .filter-group {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .filter-group label {
+        font-weight: 500;
+        color: var(--dark);
+        margin-bottom: 0;
+        white-space: nowrap;
+    }
+
+    .filter-group label i {
+        color: var(--primary);
+        margin-right: 0.5rem;
+    }
+
+    .search-box {
+        display: flex;
+        gap: 0.75rem;
+        flex: 1;
+        min-width: 300px;
+    }
+
+    .search-input-container {
+        position: relative;
+        flex: 1;
+    }
+
+    .search-input {
+        width: 100%;
+        padding: 0.75rem 1.25rem 0.75rem 2.5rem;
+        border: 1px solid #d1d3e2;
+        border-radius: 8px;
+        font-size: 1rem;
+        transition: all 0.2s ease;
+    }
+
+    .search-input:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+    }
+
+    .search-icon {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--gray);
+    }
+
+    .table-responsive {
+        overflow-x: auto;
+    }
+
+    .exam-rooms-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.95rem;
+    }
+
+    .exam-rooms-table thead {
+        background-color: var(--primary);
+        color: var(--white);
+    }
+
+    .exam-rooms-table th {
+        padding: 1.25rem 1.5rem;
+        text-align: left;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.8rem;
+        letter-spacing: 0.5px;
+    }
+
+    .exam-rooms-table th i {
+        margin-right: 8px;
+    }
+
+    .exam-rooms-table td {
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        vertical-align: middle;
+    }
+
+    .exam-rooms-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .exam-rooms-table tbody tr:hover {
+        background-color: rgba(67, 97, 238, 0.05);
+    }
+
+    .hidden-row {
+        display: none;
+    }
+
+    .no-results-row {
+        text-align: center;
+        padding: 2rem;
+        color: var(--gray);
+    }
+
+    .no-results-row i {
+        font-size: 2rem;
+        color: #dddfeb;
+        margin-bottom: 0.5rem;
+    }
+
+    .room-badge {
+        display: inline-block;
+        padding: 0.35rem 0.75rem;
+        background-color: rgba(67, 97, 238, 0.1);
+        color: var(--primary);
+        border-radius: 50px;
+        font-weight: 600;
+        font-size: 0.85rem;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 0.75rem;
+    }
+
+    .btn-action {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        text-decoration: none;
+        transition: all 0.2s ease;
+    }
+
+    .btn-action i {
+        font-size: 0.9rem;
+    }
+
+    .btn-edit {
+        background-color: rgba(72, 149, 239, 0.1);
+        color: var(--info);
+        border: 1px solid rgba(72, 149, 239, 0.3);
+    }
+
+    .btn-edit:hover {
+        background-color: rgba(72, 149, 239, 0.2);
+        transform: scale(1.1);
+    }
+
+    .btn-delete {
+        background-color: rgba(247, 37, 133, 0.1);
+        color: var(--danger);
+        border: 1px solid rgba(247, 37, 133, 0.3);
+    }
+
+    .btn-delete:hover {
+        background-color: rgba(247, 37, 133, 0.2);
+        transform: scale(1.1);
+    }
+
+    .empty-state {
+        padding: 3rem 2rem;
+        text-align: center;
+    }
+
+    .empty-image {
+        max-width: 280px;
+        margin-bottom: 1.5rem;
+        opacity: 0.8;
+    }
+
+    .empty-state h3 {
+        color: var(--dark);
+        margin-bottom: 0.5rem;
+    }
+
+    .empty-state p {
+        color: var(--gray);
+        margin-bottom: 1.5rem;
+        max-width: 500px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .exam-summary {
+        display: flex;
+        gap: 1.5rem;
+        margin-top: 1.5rem;
+        flex-wrap: wrap;
+    }
+
+    .summary-card {
+        background-color: var(--white);
+        border-radius: 10px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        flex: 1;
+        min-width: 200px;
+        text-align: center;
+    }
+
+    .summary-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--primary);
+        display: block;
+        line-height: 1;
+    }
+
+    .summary-label {
+        font-size: 0.9rem;
+        color: var(--gray);
+        margin-top: 0.5rem;
+        display: block;
+    }
+
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 500;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        border: none;
+        cursor: pointer;
+        font-size: 0.95rem;
+    }
+
+    .btn i {
+        font-size: 0.9rem;
+    }
+
+    .btn-primary {
+        background-color: var(--primary);
+        color: var(--white);
+    }
+
+    .btn-primary:hover {
+        background-color: var(--primary-dark);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(67, 97, 238, 0.2);
+    }
+
+    .btn-secondary {
+        background-color: var(--light);
+        color: var(--dark);
+    }
+
+    .btn-secondary:hover {
+        background-color: #e9ecef;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+
+    .form-control {
+        padding: 0.75rem 1rem;
+        border: 1px solid #d1d3e2;
+        border-radius: 8px;
+        font-size: 1rem;
+        min-width: 180px;
+        transition: all 0.2s ease;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+    }
+
+    @media (max-width: 768px) {
+        .exam-rooms-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .header-actions {
+            width: 100%;
+            flex-direction: column;
+        }
+
+        .filters-row {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 1rem;
+        }
+
+        .filter-group {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .search-box {
+            min-width: 100%;
+        }
+
+        .exam-rooms-table th,
+        .exam-rooms-table td {
+            padding: 1rem;
+        }
+
+        .action-buttons {
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .summary-card {
+            min-width: 100%;
+        }
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const searchInput = document.getElementById('searchInput');
+        const resetBtn = document.getElementById('resetBtn');
+        const dayFilter = document.getElementById('dayFilter');
+        const tableBody = document.getElementById('examRoomsTableBody');
+        const originalRows = Array.from(document.querySelectorAll('.exam-room-row'));
+        const filteredCountElement = document.getElementById('filteredCount');
+
+        function filterExamRooms() {
+            const searchTerm = searchInput.value.trim().toLowerCase();
+            const selectedDay = dayFilter.value;
+
+            let visibleCount = 0;
+
+            originalRows.forEach(row => {
+                const subject = row.querySelector('.subject-name').textContent.toLowerCase();
+                const time = row.querySelector('.exam-time').textContent.toLowerCase();
+                const room = row.querySelector('.room-badge').textContent.toLowerCase();
+                const rowDay = row.getAttribute('data-day');
+
+                const dayMatch = selectedDay === 'all' || rowDay === selectedDay;
+                const searchMatch = searchTerm === '' ||
+                    subject.includes(searchTerm) ||
+                    time.includes(searchTerm) ||
+                    room.includes(searchTerm);
+
+                if (dayMatch && searchMatch) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            if (filteredCountElement) {
+                filteredCountElement.textContent = visibleCount;
+            }
+
+            const existingNoResults = tableBody.querySelector('.no-results-row');
+            if (existingNoResults) {
+                tableBody.removeChild(existingNoResults);
+            }
+
+            if (visibleCount === 0) {
+                const noResultsRow = document.createElement('tr');
+                noResultsRow.className = 'no-results-row';
+                noResultsRow.innerHTML = `
+                    <td colspan="5">
+                        <i class="fas fa-calendar-times"></i>
+                        <p>No exam rooms found matching your criteria</p>
+                        <button class="btn btn-primary" onclick="resetFilters()">
+                            <i class="fas fa-sync-alt"></i> Reset Filters
+                        </button>
+                    </td>
+                `;
+                tableBody.appendChild(noResultsRow);
+            }
+        }
+
+        function resetFilters() {
+            searchInput.value = '';
+            dayFilter.value = 'all';
+            filterExamRooms();
+        }
+
+        searchInput.addEventListener('input', filterExamRooms);
+        dayFilter.addEventListener('change', filterExamRooms);
+        resetBtn.addEventListener('click', resetFilters);
+
+        originalRows.forEach((row, index) => {
+            row.style.opacity = '0';
+            row.style.transform = 'translateY(20px)';
+            row.style.animation = `fadeInUp 0.4s ease forwards ${index * 0.05}s`;
+
+            const editLink = row.querySelector('.btn-edit');
+            if (editLink) {
+                row.style.cursor = 'pointer';
+                row.addEventListener('click', function (e) {
+                    if (!e.target.closest('.btn-edit') && !e.target.closest('.btn-delete')) {
+                        window.location.href = editLink.href;
+                    }
+                });
+            }
+        });
+
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fadeInUp {
+                from { opacity: 0; transform: translateY(20px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+        `;
+        document.head.appendChild(style);
+
+        window.resetFilters = resetFilters;
+    });
+</script>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+{% endblock %}

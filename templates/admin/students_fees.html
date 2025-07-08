@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Students Fees Management</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --primary-light: #e0e7ff;
+            --success-color: #28a745;
+            --success-light: #d4edda;
+            --danger-color: #dc3545;
+            --danger-light: #f8d7da;
+            --warning-color: #ffc107;
+            --warning-light: #fff3cd;
+            --light-gray: #f8f9fa;
+            --dark-gray: #343a40;
+            --border-radius: 8px;
+            --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f7fa;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: 30px;
+        }
+
+        h1 {
+            color: var(--dark-gray);
+            margin-bottom: 25px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .filters-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 25px;
+            background: var(--light-gray);
+            padding: 20px;
+            border-radius: var(--border-radius);
+        }
+
+        .filter-group {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .filter-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .filter-group input,
+        .filter-group select {
+            width: 100%;
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            transition: var(--transition);
+        }
+
+        .filter-group input:focus,
+        .filter-group select:focus {
+            border-color: var(--primary-color);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 15px;
+            text-align: left;
+            position: sticky;
+            top: 0;
+        }
+
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        tr:nth-child(even) {
+            background-color: var(--light-gray);
+        }
+
+        tr:hover {
+            background-color: rgba(67, 97, 238, 0.05);
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .paid {
+            background-color: var(--success-light);
+            color: var(--success-color);
+        }
+
+        .unpaid {
+            background-color: var(--danger-light);
+            color: var(--danger-color);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 50px 20px;
+            color: #666;
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            color: #ddd;
+            margin-bottom: 15px;
+        }
+
+        .summary-card {
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: 20px;
+            margin-bottom: 25px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .summary-item {
+            flex: 1;
+            min-width: 200px;
+            text-align: center;
+            padding: 15px;
+            border-radius: var(--border-radius);
+        }
+
+        .summary-item h3 {
+            margin-top: 0;
+            color: #555;
+            font-size: 1rem;
+        }
+
+        .summary-item p {
+            margin-bottom: 0;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .total-students {
+            background-color: var(--primary-light);
+            color: var(--primary-color);
+        }
+
+        .total-paid {
+            background-color: var(--success-light);
+            color: var(--success-color);
+        }
+
+        .total-unpaid {
+            background-color: var(--danger-light);
+            color: var(--danger-color);
+        }
+
+        .action-btn {
+            padding: 5px 10px;
+            border-radius: var(--border-radius);
+            border: none;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .delete-btn {
+            background-color: var(--danger-light);
+            color: var(--danger-color);
+        }
+
+        .delete-btn:hover {
+            background-color: rgba(220, 53, 69, 0.2);
+        }
+
+        .pay-btn {
+            background-color: var(--success-light);
+            color: var(--success-color);
+        }
+
+        .pay-btn:hover {
+            background-color: rgba(40, 167, 69, 0.2);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            overflow-y: auto;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .modal-content {
+            background-color: #fff;
+            margin: 10% auto;
+            padding: 25px 30px;
+            border-radius: 10px;
+            max-width: 420px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #eee;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #4361ee;
+        }
+
+        .modal-header span {
+            font-size: 1.6rem;
+            font-weight: bold;
+            cursor: pointer;
+            color: #888;
+            transition: color 0.3s ease;
+        }
+
+        .modal-header span:hover {
+            color: #4361ee;
+        }
+
+        .modal-body {
+            padding-top: 10px;
+        }
+
+        form#paymentForm {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            margin-bottom: 6px;
+            font-weight: 600;
+            color: #444;
+            font-size: 1rem;
+        }
+
+        .form-group input[readonly] {
+            background-color: #f5f7ff;
+            border: 1.5px solid #aac4ff;
+            border-radius: 6px;
+            padding: 10px 15px;
+            font-size: 1rem;
+            color: #222;
+            cursor: default;
+            user-select: text;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input[readonly]:focus {
+            outline: none;
+            border-color: #4361ee;
+            box-shadow: 0 0 6px rgba(67, 97, 238, 0.4);
+        }
+
+        @media (max-width: 480px) {
+            .modal-content {
+                margin: 20% 10px;
+                width: auto;
+                padding: 20px;
+            }
+        }
+
+        .payment-history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .payment-history {
+            display: block;
+            margin-top: 30px;
+        }
+
+        .payment-history h3 {
+            margin-bottom: 15px;
+            color: var(--dark-gray);
+        }
+
+        .payment-item {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 15px;
+            margin-bottom: 10px;
+            box-shadow: var(--box-shadow);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .payment-info {
+            flex: 1;
+        }
+
+        .payment-amount {
+            font-weight: 700;
+            color: var(--success-color);
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border-radius: var(--border-radius);
+            border: none;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+
+        .btn-success {
+            background-color: var(--success-color);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background-color: #218838;
+        }
+
+        .btn-danger {
+            background-color: var(--danger-color);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #c82333;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #3a56e8;
+        }
+
+        .pdf-download-btn {
+            margin-left: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1><i class="fas fa-money-bill-wave"></i> Students Fees Management</h1>
+
+        <div class="summary-card">
+            <div class="summary-item total-students">
+                <h3>Total Students</h3>
+                <p>{{ students|length }}</p>
+            </div>
+            <div class="summary-item total-paid">
+                <h3>Paid Students</h3>
+                <p>{{ students|selectattr('payment_status', 'equalto', 'paid')|list|length }}</p>
+            </div>
+            <div class="summary-item total-unpaid">
+                <h3>Unpaid Students</h3>
+                <p>{{ students|rejectattr('payment_status', 'equalto', 'paid')|list|length }}</p>
+            </div>
+        </div>
+
+        <div class="filters-container">
+            <div class="filter-group">
+                <label for="searchInput"><i class="fas fa-search"></i> Search by Name/Email</label>
+                <input type="text" id="searchInput" placeholder="Enter name or email..." />
+            </div>
+
+            <div class="filter-group">
+                <label for="univIdInput"><i class="fas fa-id-card"></i> Search by University ID</label>
+                <input type="text" id="univIdInput" placeholder="Enter university ID..." />
+            </div>
+
+            <div class="filter-group">
+                <label for="paymentFilter"><i class="fas fa-filter"></i> Payment Status</label>
+                <select id="paymentFilter">
+                    <option value="all">All Students</option>
+                    <option value="paid">Paid Only</option>
+                    <option value="unpaid">Unpaid Only</option>
+                </select>
+            </div>
+        </div>
+
+        <table id="studentsTable">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>University ID</th>
+                    <th>Stage</th>
+                    <th>Fee Amount</th>
+                    <th>Payment Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if students %}
+                {% for student in students %}
+                <tr>
+                    <td>{{ student.name }}</td>
+                    <td>{{ student.email }}</td>
+                    <td>{{ student.university_id }}</td>
+                    <td>Stage {{ student.stage }}</td>
+                    <td>{{ student.current_fee }} EGP</td>
+                    <td>
+                        <span
+                            class="status-badge {% if student.payment_status == 'paid' %}paid{% else %}unpaid{% endif %}">
+                            {% if student.payment_status == 'paid' %}
+                            <i class="fas fa-check-circle"></i> Paid
+                            {% else %}
+                            <i class="fas fa-times-circle"></i> Unpaid
+                            {% endif %}
+                        </span>
+                    </td>
+                    <td>
+                        {% if student.payment_status == 'paid' %}
+                        <button class="action-btn delete-btn"
+                            onclick="showDeleteModal('{{ student._id }}', '{{ student.name }}')">
+                            <i class="fas fa-trash-alt"></i> Delete Payment
+                        </button>
+                        {% else %}
+                        <button class="action-btn pay-btn"
+                            onclick="showPaymentModal('{{ student._id }}', '{{ student.name }}', {{ student.stage }}, {{ student.current_fee }})">
+                            <i class="fas fa-money-bill-wave"></i> Record Payment
+                        </button>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+                {% else %}
+                <tr>
+                    <td colspan="7">
+                        <div class="empty-state">
+                            <i class="fas fa-user-slash"></i>
+                            <h3>No students found</h3>
+                            <p>There are currently no students registered in the system</p>
+                        </div>
+                    </td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+
+        {% if students %}
+        <div class="payment-history">
+            <div class="payment-history-header">
+                <h3><i class="fas fa-history"></i> Recent Payment History</h3>
+                {% if students|selectattr('payment_details')|list|length > 0 %}
+                <button id="downloadPdfBtn" class="btn btn-primary pdf-download-btn">
+                    <i class="fas fa-file-pdf"></i> Download as PDF
+                </button>
+                {% endif %}
+            </div>
+            
+            <button id="togglePaymentHistory" class="btn btn-secondary">Hide Payment History</button>
+            
+            <div id="historyContent">
+                {% for student in students if student.payment_details %}
+                <div class="payment-item">
+                    <div class="payment-info">
+                        <strong>{{ student.name }}</strong> - Stage {{ student.stage }}
+                        <div class="text-muted">
+                            {{ student.payment_details.payment_date.strftime('%Y-%m-%d %H:%M') }} | Transaction:
+                            {{ student.payment_details.transaction_id }}
+                        </div>
+                    </div>
+                    <div class="payment-amount">{{ student.payment_details.amount }} EGP</div>
+                </div>
+                {% else %}
+                <p>No recent payments found</p>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div id="paymentModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Record Payment</h3>
+                <span onclick="closePaymentModal()" style="cursor: pointer">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="paymentForm">
+                    <input type="hidden" id="paymentStudentId" />
+                    <div class="form-group">
+                        <label for="studentNameInput">Student Name</label>
+                        <input type="text" id="studentNameInput" readonly />
+                    </div>
+                    <div class="form-group">
+                        <label for="paymentStage">Stage</label>
+                        <input type="number" id="paymentStage" min="1" max="4" readonly />
+                    </div>
+                    <div class="form-group">
+                        <label for="paymentAmount">Amount (EGP)</label>
+                        <input type="number" id="paymentAmount" step="0.01" min="0" readonly />
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closePaymentModal()">Cancel</button>
+                <button class="btn btn-success" id="confirmPayment">Record Payment</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="deleteModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Delete Payment Record</h3>
+                <span onclick="closeDeleteModal()" style="cursor: pointer">&times;</span>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete the payment record for <strong id="studentName"></strong>?</p>
+                <p>This will mark the student as unpaid for their current stage.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeDeleteModal()">Cancel</button>
+                <button class="btn btn-danger" id="confirmDelete">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showPaymentModal(studentId, studentName, stage, amount) {
+            document.getElementById('paymentStudentId').value = studentId;
+            document.getElementById('studentNameInput').value = studentName;
+            document.getElementById('paymentStage').value = stage;
+            document.getElementById('paymentAmount').value = amount;
+            document.getElementById('paymentModal').style.display = 'block';
+        }
+
+        function closePaymentModal() {
+            document.getElementById('paymentModal').style.display = 'none';
+        }
+
+        document.getElementById('confirmPayment').addEventListener('click', function (event) {
+            event.preventDefault();
+
+            const studentId = document.getElementById('paymentStudentId').value;
+            const stage = document.getElementById('paymentStage').value;
+            const amount = document.getElementById('paymentAmount').value;
+
+            if (!studentId || !stage || !amount) {
+                alert('Please fill all fields');
+                return;
+            }
+
+            fetch(`/admin/record_payment/${studentId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: `stage=${encodeURIComponent(stage)}&amount=${encodeURIComponent(amount)}`
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(data.message || 'Payment recorded successfully');
+                        window.location.reload();
+                    } else {
+                        alert(data.message || 'An error occurred');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while recording payment');
+                });
+        });
+
+        let deletingStudentId = null;
+
+        function showDeleteModal(studentId, studentName) {
+            deletingStudentId = studentId;
+            document.getElementById('studentName').textContent = studentName;
+            document.getElementById('deleteModal').style.display = 'block';
+        }
+
+        function closeDeleteModal() {
+            deletingStudentId = null;
+            document.getElementById('deleteModal').style.display = 'none';
+        }
+
+        document.getElementById('confirmDelete').addEventListener('click', function () {
+            if (!deletingStudentId) return;
+
+            fetch(`/admin/delete_payment/${deletingStudentId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(data.message || 'Payment record deleted successfully');
+                        window.location.reload();
+                    } else {
+                        alert(data.message || 'Failed to delete payment record');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while deleting payment record');
+                });
+        });
+
+        window.onclick = function (event) {
+            const paymentModal = document.getElementById('paymentModal');
+            const deleteModal = document.getElementById('deleteModal');
+            if (event.target === paymentModal) {
+                closePaymentModal();
+            }
+            if (event.target === deleteModal) {
+                closeDeleteModal();
+            }
+        };
+
+        const searchInput = document.getElementById('searchInput');
+        const univIdInput = document.getElementById('univIdInput');
+        const paymentFilter = document.getElementById('paymentFilter');
+        const studentsTable = document.getElementById('studentsTable').getElementsByTagName('tbody')[0];
+
+      function filterTable() {
+    const searchText = searchInput.value.toLowerCase();
+    const univIdText = univIdInput.value.toLowerCase();
+    const paymentStatus = paymentFilter.value;
+
+    Array.from(studentsTable.rows).forEach(row => {
+        const name = row.cells[0].textContent.toLowerCase();
+        const email = row.cells[1].textContent.toLowerCase();
+        const universityId = row.cells[2].textContent.toLowerCase();
+        const statusCell = row.cells[5];
+        const isPaid = statusCell.querySelector('.paid') !== null;
+
+        const matchesSearch = name.includes(searchText) || email.includes(searchText);
+        const matchesUnivId = universityId.includes(univIdText);
+        const matchesPayment = (paymentStatus === 'all') ||
+                              (paymentStatus === 'paid' && isPaid) ||
+                              (paymentStatus === 'unpaid' && !isPaid);
+
+        if (matchesSearch && matchesUnivId && matchesPayment) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+}
+
+        searchInput.addEventListener('input', filterTable);
+        univIdInput.addEventListener('input', filterTable);
+        paymentFilter.addEventListener('change', filterTable);
+
+        const toggleBtn = document.getElementById('togglePaymentHistory');
+        const historyContent = document.getElementById('historyContent');
+
+        toggleBtn.addEventListener('click', () => {
+            if (historyContent.style.display === 'none') {
+                historyContent.style.display = 'block';
+                toggleBtn.textContent = 'Hide Payment History';
+            } else {
+                historyContent.style.display = 'none';
+                toggleBtn.textContent = 'Show Payment History';
+            }
+        });
+
+     document.getElementById('downloadPdfBtn')?.addEventListener('click', () => {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    
+    doc.setProperties({
+        title: 'Payment History Report',
+        author: 'Fees Management System'
+    });
+
+    doc.setFontSize(16);
+    doc.setTextColor(40, 53, 147);
+    doc.text('Payment History Summary (Paid Students)', 105, 20, { align: 'center' });
+    
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    doc.text(`Generated: ${new Date().toLocaleDateString()}`, 105, 28, { align: 'center' });
+    
+    const headers = [
+        { content: 'University ID', styles: { fontStyle: 'bold' } },
+        { content: 'Student Name', styles: { fontStyle: 'bold' } },
+        { content: 'Stage', styles: { fontStyle: 'bold' } },
+        { content: 'Amount (EGP)', styles: { fontStyle: 'bold', halign: 'right' } },
+    ];
+
+    const rows = [];
+    
+    document.querySelectorAll('tbody tr').forEach(row => {
+        const cells = row.cells;
+        if (cells.length >= 7) { 
+            const paymentStatus = cells[5]?.textContent.trim().toLowerCase(); 
+            
+            if (paymentStatus === 'paid' || paymentStatus === 'تم الدفع') {
+                rows.push([
+                    cells[2].textContent.trim(), 
+                    cells[0].textContent.trim(), 
+                    cells[3].textContent.replace('Stage', '').trim(), 
+                    { content: cells[4].textContent.trim(), styles: { halign: 'right' } }, 
+                    cells[6].textContent.trim() 
+                ]);
+            }
+        }
+    });
+
+    if (rows.length === 0) {
+        doc.setFontSize(12);
+        doc.setTextColor(255, 0, 0);
+        doc.text('No paid students found', 105, 40, { align: 'center' });
+    } else {
+        doc.autoTable({
+            startY: 35,
+            head: [headers],
+            body: rows,
+            theme: 'grid',
+            headStyles: {
+                fillColor: [67, 97, 238],
+                textColor: 255,
+                fontStyle: 'bold'
+            },
+            columnStyles: {
+                3: { halign: 'right' } 
+            },
+            styles: {
+                fontSize: 10,
+                cellPadding: 5,
+                overflow: 'linebreak'
+            },
+            margin: { horizontal: 10 }
+        });
+    }
+
+    doc.save(`Paid_Students_Payments_${new Date().toISOString().slice(0, 10)}.pdf`);
+});
+    </script>
+</body>
+
+</html>

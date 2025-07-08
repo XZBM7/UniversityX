@@ -1,0 +1,511 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Subjects Management{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">
+        <i class="fas fa-book"></i>
+        Subjects Management
+    </h1>
+    <div class="action-buttons">
+        <a href="{{ url_for('admin.dashboard') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
+        <a href="{{ url_for('admin.add_subject') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Add New Subject
+        </a>
+        <button id="toggleGlobalRegistration" class="btn btn-info">
+            <i class="fas fa-user-edit"></i> 
+            <span id="globalToggleText">
+                {% if global_registration_status %}Disable{% else %}Enable{% endif %} All Registration
+            </span>
+        </button>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <div class="filters-container">
+            <div class="filter-group">
+                <label for="stageFilter">Filter by Stage:</label>
+                <select id="stageFilter" class="form-control">
+                    <option value="all">All Stages</option>
+                    <option value="1">Stage 1</option>
+                    <option value="2">Stage 2</option>
+                    <option value="3">Stage 3</option>
+                    <option value="4">Stage 4</option>
+                </select>
+            </div>
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Search by name or term..." class="search-input">
+                <button id="searchBtn" class="btn btn-primary">
+                    <i class="fas fa-search"></i> Search
+                </button>
+                <button id="resetBtn" class="btn btn-secondary">
+                    <i class="fas fa-times"></i> Reset
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        {% if subjects %}
+        <div class="table-responsive">
+            <table class="subjects-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Hours</th>
+                        <th>Stage</th>
+                        <th>Term</th>
+                        <th>Registration Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="subjectsTableBody">
+                    {% for subject in subjects %}
+                    <tr class="subject-row" data-stage="{{ subject.stage }}">
+                        <td class="subject-name">{{ subject.name }}</td>
+                        <td>{{ subject.hours }}</td>
+                        <td class="subject-stage">{{ subject.stage }}</td>
+                        <td class="subject-term">{{ subject.term }}</td>
+                        <td>
+                            <div class="registration-toggle">
+                                <label class="switch">
+                                    <input type="checkbox" class="registration-status" 
+                                           data-subject-id="{{ subject._id }}"
+                                           {% if subject.registration_open %}checked{% endif %}>
+                                    <span class="slider round"></span>
+                                </label>
+                                <span class="status-text">
+                                    {% if subject.registration_open %}Open{% else %}Closed{% endif %}
+                                </span>
+                            </div>
+                        </td>
+                        <td class="action-links">
+                            <a href="{{ url_for('admin.edit_subject', id=subject._id) }}" class="btn-edit">
+                                <i class="fas fa-edit"></i> Edit
+                            </a>
+                            <a href="{{ url_for('admin.delete_subject', id=subject._id) }}" class="btn-delete"
+                                onclick="return confirm('Are you sure you want to delete this subject?')">
+                                <i class="fas fa-trash-alt"></i> Delete
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-book-open"></i>
+            <p>No subjects registered yet.</p>
+            <a href="{{ url_for('admin.add_subject') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Add Your First Subject
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+    .subjects-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0;
+    }
+
+    .subjects-table th {
+        background-color: #f8f9fc;
+        color: #5a5c69;
+        font-weight: 700;
+        padding: 1rem;
+        text-align: left;
+        border-bottom: 1px solid #e3e6f0;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.05rem;
+    }
+
+    .subjects-table td {
+        padding: 1rem;
+        border-bottom: 1px solid #e3e6f0;
+        color: #6e707e;
+    }
+
+    .subjects-table tr:hover {
+        background-color: #f8f9fc;
+    }
+
+    .action-links {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .btn-edit,
+    .btn-delete {
+        padding: 0.375rem 0.75rem;
+        border-radius: 0.35rem;
+        text-decoration: none;
+        font-size: 0.875rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .btn-edit {
+        color: #4e73df;
+        border: 1px solid #4e73df;
+    }
+
+    .btn-edit:hover {
+        background-color: #f0f4fe;
+    }
+
+    .btn-delete {
+        color: #e74a3b;
+        border: 1px solid #e74a3b;
+    }
+
+    .btn-delete:hover {
+        background-color: #fdf0ef;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 2rem;
+        color: #858796;
+    }
+
+    .empty-state i {
+        font-size: 2rem;
+        color: #dddfeb;
+        margin-bottom: 0.5rem;
+    }
+
+    .empty-state p {
+        margin: 0.5rem 0 1rem;
+    }
+
+    .filters-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .filter-group {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .filter-group label {
+        margin-bottom: 0;
+        font-weight: 600;
+        color: #5a5c69;
+    }
+
+    .form-control {
+        padding: 0.375rem 0.75rem;
+        border: 1px solid #d1d3e2;
+        border-radius: 0.35rem;
+        font-size: 0.875rem;
+        height: calc(1.5em + 0.75rem + 2px);
+    }
+
+    .search-box {
+        display: flex;
+        gap: 0.5rem;
+        max-width: 600px;
+        width: 100%;
+    }
+
+    .search-input {
+        flex: 1;
+        padding: 0.5rem 1rem;
+        border: 1px solid #d1d3e2;
+        border-radius: 0.35rem;
+        font-size: 0.875rem;
+    }
+
+    .search-input:focus {
+        outline: none;
+        border-color: #4e73df;
+        box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+    }
+
+    .hidden-row {
+        display: none;
+    }
+
+    .no-results {
+        text-align: center;
+        padding: 2rem;
+        color: #858796;
+    }
+
+    .no-results i {
+        font-size: 2rem;
+        color: #dddfeb;
+        margin-bottom: 0.5rem;
+    }
+
+    .registration-toggle {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .status-text {
+        font-size: 0.875rem;
+        color: #5a5c69;
+    }
+    
+    /* Switch styling */
+    .switch {
+        position: relative;
+        display: inline-block;
+        width: 50px;
+        height: 24px;
+    }
+    
+    .switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+    
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        transition: .4s;
+    }
+    
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 16px;
+        width: 16px;
+        left: 4px;
+        bottom: 4px;
+        background-color: white;
+        transition: .4s;
+    }
+    
+    input:checked + .slider {
+        background-color: #4e73df;
+    }
+    
+    input:checked + .slider:before {
+        transform: translateX(26px);
+    }
+    
+    /* Rounded sliders */
+    .slider.round {
+        border-radius: 24px;
+    }
+    
+    .slider.round:before {
+        border-radius: 50%;
+    }
+
+    @media (max-width: 768px) {
+        .filters-container {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .filter-group {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .search-box {
+            flex-direction: column;
+        }
+
+        .search-box button {
+            width: 100%;
+        }
+
+        .subjects-table {
+            display: block;
+            overflow-x: auto;
+        }
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const searchInput = document.getElementById('searchInput');
+        const searchBtn = document.getElementById('searchBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const stageFilter = document.getElementById('stageFilter');
+        const tableBody = document.getElementById('subjectsTableBody');
+        const originalRows = Array.from(document.querySelectorAll('.subject-row'));
+
+        function filterSubjects() {
+            const searchTerm = searchInput.value.trim().toLowerCase();
+            const selectedStage = stageFilter.value;
+
+            let hasVisibleRows = false;
+
+            originalRows.forEach(row => {
+                const name = row.querySelector('.subject-name').textContent.toLowerCase();
+                const term = row.querySelector('.subject-term').textContent.toLowerCase();
+                const rowStage = row.getAttribute('data-stage');
+
+                const stageMatch = selectedStage === 'all' || rowStage === selectedStage;
+
+                const searchMatch = searchTerm === '' ||
+                    name.includes(searchTerm) ||
+                    term.includes(searchTerm);
+
+                if (stageMatch && searchMatch) {
+                    row.style.display = '';
+                    hasVisibleRows = true;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            const existingNoResults = tableBody.querySelector('.no-results-row');
+            if (existingNoResults) {
+                tableBody.removeChild(existingNoResults);
+            }
+
+            if (!hasVisibleRows) {
+                const noResultsRow = document.createElement('tr');
+                noResultsRow.className = 'no-results-row no-results';
+                noResultsRow.innerHTML = `
+                    <td colspan="6">
+                        <i class="fas fa-search"></i>
+                        <p>No subjects found matching your criteria</p>
+                    </td>
+                `;
+                tableBody.appendChild(noResultsRow);
+            }
+        }
+
+        function resetFilters() {
+            searchInput.value = '';
+            stageFilter.value = 'all';
+            filterSubjects();
+        }
+
+        searchBtn.addEventListener('click', filterSubjects);
+        resetBtn.addEventListener('click', resetFilters);
+        stageFilter.addEventListener('change', filterSubjects);
+
+        searchInput.addEventListener('keyup', function (e) {
+            if (e.key === 'Enter') {
+                filterSubjects();
+            }
+        });
+
+        originalRows.forEach(row => {
+            const editLink = row.querySelector('.btn-edit');
+            if (editLink) {
+                row.style.cursor = 'pointer';
+                row.addEventListener('click', function (e) {
+                    if (!e.target.closest('.btn-edit') && !e.target.closest('.btn-delete') && !e.target.closest('.switch')) {
+                        window.location.href = editLink.href;
+                    }
+                });
+            }
+        });
+
+        // Toggle individual subject registration status
+        document.querySelectorAll('.registration-status').forEach(toggle => {
+            toggle.addEventListener('change', function() {
+                const subjectId = this.dataset.subjectId;
+                const isOpen = this.checked;
+                const statusText = this.closest('.registration-toggle').querySelector('.status-text');
+                
+                fetch('{{ url_for("admin.toggle_subject_registration") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        subject_id: subjectId,
+                        status: isOpen
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        statusText.textContent = isOpen ? 'Open' : 'Closed';
+                        showToast(isOpen ? 'Registration opened for this subject' : 'Registration closed for this subject', 'success');
+                    } else {
+                        this.checked = !isOpen; // revert toggle if failed
+                        showToast('Failed to update registration status', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    this.checked = !isOpen; // revert toggle on error
+                    showToast('An error occurred', 'error');
+                });
+            });
+        });
+        
+        // Toggle all subjects registration status
+        document.getElementById('toggleGlobalRegistration').addEventListener('click', function() {
+            const currentStatus = '{{ global_registration_status }}' === 'True';
+            const newStatus = !currentStatus;
+            
+            if (confirm(`Are you sure you want to ${newStatus ? 'OPEN' : 'CLOSE'} registration for ALL subjects?`)) {
+                fetch('{{ url_for("admin.toggle_global_registration") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        status: newStatus
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Update all toggles and status texts
+                        document.querySelectorAll('.registration-status').forEach(toggle => {
+                            toggle.checked = newStatus;
+                            const statusText = toggle.closest('.registration-toggle').querySelector('.status-text');
+                            statusText.textContent = newStatus ? 'Open' : 'Closed';
+                        });
+                        
+                        // Update global toggle button text
+                        document.getElementById('globalToggleText').textContent = 
+                            newStatus ? 'Disable All Registration' : 'Enable All Registration';
+                            
+                        showToast(`Registration ${newStatus ? 'opened' : 'closed'} for all subjects`, 'success');
+                        setTimeout(() => window.location.reload(), 1000);
+                    } else {
+                        showToast('Failed to update registration statuses', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showToast('An error occurred', 'error');
+                });
+            }
+        });
+        
+        function showToast(message, type) {
+            // يمكن تعديل هذه الدالة لعرض إشعارات أحلى بدلاً من alert
+            alert(message);
+        }
+
+        filterSubjects();
+    });
+</script>
+{% endblock %}

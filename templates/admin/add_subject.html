@@ -1,0 +1,165 @@
+{% extends "admin/base.html" %}
+
+{% block content %}
+<div class="simple-container">
+    <h1 class="simple-title">Add New Subject</h1>
+
+    <div class="simple-form-container">
+        <a href="{{ url_for('admin.list_subjects') }}" class="simple-back-link">
+            ← Back to Subjects List
+        </a>
+
+        <form method="POST" action="{{ url_for('admin.add_subject') }}" class="simple-form">
+            <div class="form-group">
+                <label>Name:</label>
+                <input type="text" name="name" class="form-input" required>
+            </div>
+
+            <div class="form-group">
+                <label>Hours:</label>
+                <input type="number" name="hours" class="form-input" min="1" required>
+            </div>
+
+            <div class="form-group">
+                <label>Stage (1-4):</label>
+                <input type="number" name="stage" class="form-input" min="1" max="4" required>
+            </div>
+
+
+
+            <div class="form-group">
+                <label>Term:</label>
+                <select name="term" class="form-select" required>
+                    <option value="First">First Term</option>
+                    <option value="Second">Second Term</option>
+                </select>
+            </div>
+
+            <button type="submit" class="form-submit-btn">Add Subject</button>
+        </form>
+    </div>
+</div>
+
+<style>
+    .simple-container {
+        max-width: 800px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+    }
+
+    .simple-title {
+        font-size: 1.8rem;
+        color: #333;
+        margin-bottom: 1.5rem;
+        text-align: center;
+    }
+
+    .simple-form-container {
+        background: white;
+        padding: 2rem;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .simple-back-link {
+        display: inline-block;
+        color: #4e73df;
+        margin-bottom: 1.5rem;
+        text-decoration: none;
+        font-weight: 500;
+    }
+
+    .simple-back-link:hover {
+        text-decoration: underline;
+    }
+
+    .simple-form {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .form-group label {
+        font-weight: 600;
+        color: #555;
+    }
+
+    .form-input,
+    .form-select {
+        padding: 0.75rem;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 1rem;
+    }
+
+    .form-input:focus,
+    .form-select:focus {
+        outline: none;
+        border-color: #4e73df;
+        box-shadow: 0 0 0 2px rgba(78, 115, 223, 0.2);
+    }
+
+    .form-submit-btn {
+        background-color: #4e73df;
+        color: white;
+        border: none;
+        padding: 0.75rem;
+        border-radius: 4px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        margin-top: 1rem;
+        transition: background-color 0.2s;
+    }
+
+    .form-submit-btn:hover {
+        background-color: #3a5bc7;
+    }
+
+    @media (max-width: 768px) {
+        .simple-container {
+            padding: 0 0.5rem;
+        }
+
+        .simple-form-container {
+            padding: 1.5rem;
+        }
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const form = document.querySelector('.simple-form');
+
+        form.addEventListener('submit', function (e) {
+            let valid = true;
+
+            form.querySelectorAll('[required]').forEach(input => {
+                if (!input.value.trim()) {
+                    input.style.borderColor = '#e74a3b';
+                    valid = false;
+                } else {
+                    input.style.borderColor = '#ddd';
+                }
+            });
+
+            const stageInput = form.querySelector('input[name="stage"]');
+            if (stageInput.value < 1 || stageInput.value > 4) {
+                stageInput.style.borderColor = '#e74a3b';
+                valid = false;
+            }
+
+            if (!valid) {
+                e.preventDefault();
+                alert('Please fill all required fields correctly.');
+            }
+        });
+    });
+</script>
+{% endblock %}

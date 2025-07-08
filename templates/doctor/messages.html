@@ -1,0 +1,355 @@
+{% extends "doctor/base.html" %}
+
+{% block title %}Student Messages - Dr. {{ session['user']['name'] }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  .messages-container {
+    max-width: 900px;
+    margin: 2rem auto;
+  }
+
+  .messages-header {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+
+  .messages-title {
+    color: #166088;
+    margin-bottom: 0.5rem;
+  }
+
+  .messages-count {
+    color: #666;
+    font-size: 1rem;
+  }
+
+  .message-card {
+    background: white;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    border-left: 4px solid #4a6fa5;
+  }
+
+  .message-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+
+  .message-sender {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .sender-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #4a6fa5;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    flex-shrink: 0;
+  }
+
+  .sender-info {
+    line-height: 1.3;
+  }
+
+  .sender-name {
+    font-weight: 600;
+    color: #333;
+  }
+
+  .sender-details {
+    font-size: 0.85rem;
+    color: #666;
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .sender-email::before {
+    content: "✉️ ";
+  }
+
+  .sender-id::before {
+    content: "🆔 ";
+  }
+
+  .message-time {
+    font-size: 0.85rem;
+    color: #666;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+
+  .message-time::before {
+    content: "🕒";
+  }
+
+  .message-content {
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 6px;
+    margin-bottom: 1rem;
+    white-space: pre-wrap;
+  }
+
+  .message-reply {
+    padding: 1rem;
+    background: #e8f4fd;
+    border-radius: 6px;
+    border-left: 3px solid #4a6fa5;
+    margin-bottom: 1rem;
+    position: relative;
+  }
+
+  .reply-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+  }
+
+  .reply-label {
+    font-weight: 600;
+    color: #166088;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .reply-time {
+    font-size: 0.8rem;
+    color: #666;
+  }
+
+  .message-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+
+  .action-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.2s ease;
+  }
+
+  .reply-link {
+    background-color: #4a6fa5;
+    color: white;
+  }
+
+  .reply-link:hover {
+    background-color: #3a5a80;
+  }
+
+  .edit-link {
+    background-color: #f8f9fa;
+    color: #4a6fa5;
+    border: 1px solid #ddd;
+  }
+
+  .edit-link:hover {
+    background-color: #e9ecef;
+  }
+
+  .delete-link {
+    background-color: #f8f9fa;
+    color: #dc3545;
+    border: 1px solid #ddd;
+  }
+
+  .delete-link:hover {
+    background-color: #f1f1f1;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 3rem;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  }
+
+  .empty-icon {
+    font-size: 2.5rem;
+    color: #ddd;
+    margin-bottom: 1rem;
+  }
+
+  .empty-text {
+    color: #666;
+    margin-bottom: 1.5rem;
+  }
+
+  @media (max-width: 768px) {
+    .message-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+
+    .message-time {
+      align-self: flex-end;
+    }
+
+    .message-actions {
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .action-link {
+      justify-content: center;
+    }
+
+    .sender-details {
+      flex-direction: column;
+      gap: 0.3rem;
+    }
+  }
+
+  .sender-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #ddd;
+    color: #333;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    font-size: 1.1rem;
+  }
+
+  .sender-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="messages-container">
+    <div class="messages-header">
+      <h1 class="messages-title">Student Messages</h1>
+      <div class="messages-count">{{ messages|length }} message(s)</div>
+    </div>
+
+    {% if messages|length == 0 %}
+    <div class="empty-state">
+      <div class="empty-icon">
+        <i class="fas fa-comments"></i>
+      </div>
+      <h3 class="empty-text">No messages found</h3>
+      <a href="{{ url_for('doctor.dashboard') }}" class="btn btn-outline">
+        <i class="fas fa-arrow-left"></i> Back to Dashboard
+      </a>
+    </div>
+    {% else %}
+    {% for message in messages %}
+    <div class="message-card">
+      <div class="message-header">
+        <div class="message-sender">
+          <div class="sender-avatar">
+            {% if message.profile_image %}
+            <img src="{{ url_for('static', filename='uploads/' ~ message.profile_image) }}" alt="avatar"
+              style="width: 40px; height: 40px; border-radius: 50%;">
+            {% else %}
+            <span>{{ message.sender_name[0]|upper }}</span>
+            {% endif %}
+          </div>
+
+          <div class="sender-info">
+            <div class="sender-name">{{ message.sender_name }}</div>
+            <div class="sender-details">
+              {% if message.sender_email %}
+              <span class="sender-email">{{ message.sender_email }}</span>
+              {% endif %}
+              {% if message.university_id %}
+              <span class="sender-id">ID: {{ message.university_id }}</span>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        <div class="message-time">
+          {% if message.timestamp %}
+          {{ message.timestamp.strftime('%b %d, %Y %H:%M') }}
+          {% else %}
+          No timestamp
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="message-content">
+        {{ message.content }}
+      </div>
+
+      {% if message.reply %}
+      <div class="message-reply">
+        <div class="reply-header">
+          <div class="reply-label">
+            <i class="fas fa-reply"></i> Your Reply
+          </div>
+          {% if message.reply_timestamp %}
+          <div class="reply-time">
+            {{ message.reply_timestamp.strftime('%b %d, %Y %H:%M') }}
+          </div>
+          {% endif %}
+        </div>
+        {{ message.reply }}
+      </div>
+      {% endif %}
+
+      <div class="message-actions">
+        {% if not message.reply %}
+        <a href="{{ url_for('doctor.reply_message', message_id=message._id) }}" class="action-link reply-link">
+          <i class="fas fa-reply"></i> Reply
+        </a>
+        {% endif %}
+        <a href="{{ url_for('doctor.edit_message', message_id=message._id) }}" class="action-link edit-link">
+          <i class="fas fa-edit"></i> Edit
+        </a>
+        <a href="{{ url_for('doctor.delete_message', message_id=message._id) }}" class="action-link delete-link"
+          onclick="return confirm('Are you sure you want to delete this message?');">
+          <i class="fas fa-trash-alt"></i> Delete
+        </a>
+      </div>
+    </div>
+    {% endfor %}
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const deleteLinks = document.querySelectorAll('.delete-link');
+    deleteLinks.forEach(link => {
+      link.addEventListener('click', function (e) {
+        if (!confirm('Are you sure you want to delete this message?')) {
+          e.preventDefault();
+        }
+      });
+    });
+  });
+</script>
+{% endblock %}

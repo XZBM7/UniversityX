@@ -1,0 +1,115 @@
+{% extends "admin/base.html" %}
+
+{% block content %}
+<style>
+    .card {
+        background-color: #fff;
+        border-radius: 12px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+        padding: 2rem;
+        max-width: 700px;
+        margin: 2rem auto;
+    }
+
+    .card-header {
+        border-bottom: 1px solid #ddd;
+        margin-bottom: 1.5rem;
+    }
+
+    .card-title {
+        font-size: 24px;
+        font-weight: bold;
+        color: #ffffff;
+    }
+
+    .form-group {
+        margin-bottom: 1rem;
+    }
+
+    label {
+        font-weight: 600;
+        display: block;
+        margin-bottom: 0.5rem;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 10px;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+        font-size: 1rem;
+    }
+
+    .form-text {
+        font-size: 0.85rem;
+        color: #666;
+        margin-top: 4px;
+    }
+
+    .btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        cursor: pointer;
+        margin-right: 10px;
+        transition: background-color 0.3s ease;
+    }
+
+    .btn-primary {
+        background-color: #007bff;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background-color: #0069d9;
+    }
+
+    .btn-secondary {
+        background-color: #6c757d;
+        color: white;
+    }
+
+    .btn-secondary:hover {
+        background-color: #5a6268;
+    }
+
+    .text-muted {
+        font-size: 0.85rem;
+        color: #999;
+    }
+</style>
+
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Edit Administrator</h3>
+    </div>
+    <div class="card-body">
+        <form method="POST" action="{{ url_for('admin.edit_admin', id=admin._id) }}">
+            <div class="form-group">
+                <label for="name">Full Name</label>
+                <input type="text" class="form-control" id="name" name="name" value="{{ admin.name }}" required>
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" class="form-control" id="email" name="email" value="{{ admin.email }}" required>
+            </div>
+
+            <div class="form-group">
+                <label for="new_password">New Password (Leave blank to keep current)</label>
+                <input type="password" class="form-control" id="new_password" name="new_password" minlength="8">
+                <small class="form-text">Minimum 8 characters</small>
+            </div>
+
+            <div class="form-group">
+                <small class="text-muted">
+                </small>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Update Administrator</button>
+            <a href="{{ url_for('admin.list_admins') }}" class="btn btn-secondary">Cancel</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

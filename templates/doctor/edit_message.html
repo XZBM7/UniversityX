@@ -1,0 +1,185 @@
+{% extends "doctor/base.html" %}
+
+{% block title %}Edit Message - Dr. {{ session['user']['name'] }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  .edit-container {
+    background: white;
+    border-radius: 8px;
+    padding: 2rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    max-width: 800px;
+    margin: 2rem auto;
+  }
+
+  .edit-header {
+    text-align: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #eee;
+  }
+
+  .edit-title {
+    color: #166088;
+    margin: 0;
+  }
+
+  .original-message {
+    background: #f8f9fa;
+    border-left: 4px solid #4a6fa5;
+    padding: 1rem;
+    margin: 1.5rem 0;
+    border-radius: 4px;
+  }
+
+  .form-group {
+    margin-bottom: 1.5rem;
+  }
+
+  .form-label {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    display: block;
+    color: #333;
+  }
+
+  .form-control {
+    width: 100%;
+    padding: 1rem;
+    font-size: 1rem;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+    transition: border-color 0.3s ease;
+    min-height: 150px;
+  }
+
+  .form-control:focus {
+    outline: none;
+    border-color: #4a6fa5;
+    box-shadow: 0 0 0 2px rgba(74, 111, 165, 0.2);
+  }
+
+  .btn-save {
+    padding: 0.75rem 1.5rem;
+    background-color: #4a6fa5;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .btn-save:hover {
+    background-color: #3a5a80;
+  }
+
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #4a6fa5;
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.3s ease;
+    margin-top: 1.5rem;
+  }
+
+  .back-link:hover {
+    color: #3a5a80;
+  }
+
+  .form-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 2rem;
+  }
+
+  @media (max-width: 768px) {
+    .edit-container {
+      padding: 1.5rem;
+    }
+
+    .form-actions {
+      flex-direction: column-reverse;
+      gap: 1rem;
+      align-items: flex-start;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="edit-container">
+    <div class="edit-header">
+      <h1 class="edit-title">Edit Message</h1>
+    </div>
+
+    <div class="original-message">
+      <p>{{ message.content }}</p>
+      {% if message.timestamp %}
+      <div class="text-muted small">
+        Sent on {{ message.timestamp.strftime('%Y-%m-%d at %H:%M') }}
+      </div>
+      {% endif %}
+    </div>
+
+    <form method="POST">
+      <div class="form-group">
+        <label for="content" class="form-label">Your Reply:</label>
+        <textarea id="content" name="content" class="form-control" required>{{ message.reply }}</textarea>
+      </div>
+
+      <div class="form-actions">
+        <a href="{{ url_for('doctor.messages') }}" class="back-link">
+          <i class="fas fa-arrow-left"></i> Back to Messages
+        </a>
+        <button type="submit" class="btn-save">
+          <i class="fas fa-save"></i> Save Changes
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const textarea = document.querySelector('.form-control');
+    if (textarea) {
+      textarea.style.height = 'auto';
+      textarea.style.height = (textarea.scrollHeight) + 'px';
+
+      textarea.addEventListener('input', function () {
+        this.style.height = 'auto';
+        this.style.height = (this.scrollHeight) + 'px';
+      });
+    }
+
+    const form = document.querySelector('form');
+    let formChanged = false;
+
+    form.addEventListener('change', function () {
+      formChanged = true;
+    });
+
+    form.addEventListener('submit', function () {
+      formChanged = false;
+    });
+
+    window.addEventListener('beforeunload', function (e) {
+      if (formChanged) {
+        e.preventDefault();
+        e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
+      }
+    });
+  });
+</script>
+{% endblock %}

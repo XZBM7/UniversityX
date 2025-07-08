@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}University X Admin{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --primary-dark: #1a252f;
+            --secondary: #7f8c8d;
+            --success: #27ae60;
+            --info: #2980b9;
+            --warning: #f39c12;
+            --danger: #e74c3c;
+            --light: #ecf0f1;
+            --dark: #2c3e50;
+            --bg-dark: #212529;
+            --gold: #f1c40f;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f8f9fc;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background-color: white;
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+            padding: 0.5rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            border-bottom: 3px solid var(--primary);
+        }
+
+        .navbar-brand {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: var(--dark);
+            transition: all 0.3s;
+        }
+
+        .navbar-brand:hover {
+            transform: scale(1.02);
+        }
+
+        .navbar-brand i {
+            margin-right: 0.75rem;
+            color: var(--primary);
+            font-size: 1.8rem;
+        }
+
+        .university-name {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.2;
+        }
+
+        .university-main-name {
+            font-weight: 900;
+            color: var(--primary);
+        }
+
+        .university-sub-name {
+            font-size: 0.7rem;
+            color: var(--secondary);
+            font-weight: 600;
+        }
+
+        .navbar-nav {
+            display: flex;
+            align-items: center;
+            list-style: none;
+        }
+
+        .nav-item {
+            margin-left: 1.5rem;
+            position: relative;
+        }
+
+        .nav-link {
+            text-decoration: none;
+            color: var(--secondary);
+            font-weight: 700;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            padding: 0.8rem 0.5rem;
+            position: relative;
+        }
+
+        .nav-link i {
+            margin-right: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        .nav-link:hover {
+            color: var(--primary);
+        }
+
+        .nav-link.active {
+            color: var(--primary);
+        }
+
+        .nav-link.active:after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background-color: var(--primary);
+        }
+
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            margin-right: 0.5rem;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .user-info:hover .user-dropdown {
+            display: block;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 0.75rem;
+            background-color: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+            border: 2px solid var(--light);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .user-dropdown {
+            display: none;
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background-color: white;
+            min-width: 200px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+            border-radius: 0.5rem;
+            z-index: 1000;
+            padding: 0.5rem 0;
+        }
+
+        .dropdown-item {
+            padding: 0.75rem 1.5rem;
+            color: var(--dark);
+            text-decoration: none;
+            display: block;
+            transition: all 0.2s;
+        }
+
+        .dropdown-item:hover {
+            background-color: var(--light);
+            color: var(--primary);
+        }
+
+        .dropdown-item i {
+            margin-right: 0.75rem;
+            width: 20px;
+            text-align: center;
+        }
+
+        .dropdown-divider {
+            border-top: 1px solid #eee;
+            margin: 0.5rem 0;
+        }
+
+        .logout-btn {
+            background-color: transparent;
+            border: 2px solid var(--danger);
+            color: var(--danger);
+            padding: 0.5rem 1.25rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .logout-btn:hover {
+            background-color: var(--danger);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid #e3e6f0;
+        }
+
+        .page-title {
+            font-size: 2rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            font-weight: 800;
+        }
+
+        .page-title i {
+            margin-right: 1rem;
+            color: var(--primary);
+            font-size: 1.8rem;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            text-decoration: none;
+            font-weight: 700;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.95rem;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn i {
+            font-size: 1rem;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+            box-shadow: 0 4px 6px rgba(44, 62, 80, 0.1);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(44, 62, 80, 0.15);
+        }
+
+        .btn-secondary {
+            background-color: var(--secondary);
+            color: white;
+            box-shadow: 0 4px 6px rgba(127, 140, 141, 0.1);
+        }
+
+        .btn-secondary:hover {
+            background-color: #6c757d;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(127, 140, 141, 0.15);
+        }
+
+        /* Card Styling */
+        .card {
+            background-color: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 0.5rem 1.5rem 0 rgba(58, 59, 69, 0.1);
+            margin-bottom: 2rem;
+            overflow: hidden;
+            transition: all 0.3s;
+            border: none;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 1rem 2rem rgba(58, 59, 69, 0.15);
+        }
+
+        .card-header {
+            padding: 1.25rem 2rem;
+            background-color: var(--primary);
+            color: white;
+            font-weight: 800;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: none;
+        }
+
+        .card-header i {
+            font-size: 1.2rem;
+        }
+
+        .card-body {
+            padding: 2rem;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+            border-radius: 0.5rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        th,
+        td {
+            padding: 1.25rem;
+            text-align: left;
+            border-bottom: 1px solid #e3e6f0;
+        }
+
+        th {
+            background-color: var(--primary);
+            color: white;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 0.05rem;
+            position: sticky;
+            top: 0;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        tr:hover {
+            background-color: #f1f5f9;
+        }
+
+        .action-links {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .action-links a {
+            color: var(--primary);
+            text-decoration: none;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            font-weight: 600;
+        }
+
+        .action-links a i {
+            font-size: 0.9rem;
+        }
+
+        .action-links a:hover {
+            color: var(--primary-dark);
+            text-decoration: none;
+            transform: translateY(-2px);
+        }
+
+        .action-links a.delete {
+            color: var(--danger);
+        }
+
+        .action-links a.delete:hover {
+            color: #c82333;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--secondary);
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            color: #e3e6f0;
+            margin-bottom: 1.5rem;
+        }
+
+        .empty-state h3 {
+            font-size: 1.75rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+        }
+
+        .empty-state p {
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Enhanced Footer */
+        .footer {
+            background-color: var(--primary-dark);
+            color: white;
+            padding: 3rem 0 1.5rem;
+            margin-top: auto;
+        }
+
+        .footer-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+        }
+
+        .footer-logo {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .footer-logo i {
+            font-size: 2rem;
+            margin-right: 1rem;
+            color: var(--gold);
+        }
+
+        .footer-logo-text {
+            font-size: 1.5rem;
+            font-weight: 800;
+        }
+
+        .footer-about {
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+            opacity: 0.9;
+        }
+
+        .footer-social {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .social-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            color: white;
+            text-decoration: none;
+        }
+
+        .social-icon:hover {
+            background-color: var(--gold);
+            color: var(--primary-dark);
+            transform: translateY(-3px);
+        }
+
+        .footer-heading {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            position: relative;
+            padding-bottom: 0.75rem;
+        }
+
+        .footer-heading:after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 50px;
+            height: 3px;
+            background-color: var(--gold);
+        }
+
+        .footer-links {
+            list-style: none;
+        }
+
+        .footer-links li {
+            margin-bottom: 0.75rem;
+        }
+
+        .footer-links a {
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .footer-links a:hover {
+            color: var(--gold);
+            padding-left: 5px;
+        }
+
+        .footer-links a i {
+            font-size: 0.8rem;
+        }
+
+        .footer-contact-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .footer-contact-item i {
+            font-size: 1.2rem;
+            color: var(--gold);
+            margin-top: 3px;
+        }
+
+        .footer-contact-text {
+            flex: 1;
+            opacity: 0.9;
+            line-height: 1.6;
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 2rem;
+            margin-top: 2rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .footer-bottom p {
+            margin-bottom: 0;
+            opacity: 0.8;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 992px) {
+            .navbar {
+                flex-direction: column;
+                align-items: stretch;
+                padding: 1rem;
+            }
+
+            .navbar-brand {
+                margin-bottom: 1rem;
+            }
+
+            .navbar-nav {
+                flex-wrap: wrap;
+                gap: 0.5rem;
+                margin: 1rem 0;
+            }
+
+            .nav-item {
+                margin-left: 0;
+            }
+
+            .user-menu {
+                margin-top: 1rem;
+                justify-content: space-between;
+            }
+
+            .page-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1.5rem;
+            }
+
+            .action-buttons {
+                width: 100%;
+                flex-wrap: wrap;
+            }
+
+            .footer-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                padding: 1.5rem;
+            }
+
+            .card-header,
+            .card-body {
+                padding: 1.5rem;
+            }
+
+            th,
+            td {
+                padding: 1rem;
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animated {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+
+        .delay-1 {
+            animation-delay: 0.1s;
+        }
+
+        .delay-2 {
+            animation-delay: 0.2s;
+        }
+
+        .delay-3 {
+            animation-delay: 0.3s;
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body>
+    <nav class="navbar">
+        <a href="{{ url_for('admin.dashboard') }}" class="navbar-brand">
+            <i class="fas fa-university"></i>
+            <div class="university-name">
+                <span class="university-main-name">UNIVERSITY X</span>
+                <span class="university-sub-name">ADMINISTRATION PORTAL</span>
+            </div>
+        </a>
+
+        <ul class="navbar-nav">
+            <li class="nav-item">
+                <a href="{{ url_for('admin.dashboard') }}"
+                    class="nav-link {% if request.path == url_for('admin.dashboard') %}active{% endif %}">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>Dashboard</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{{ url_for('admin.list_students') }}"
+                    class="nav-link {% if request.path == url_for('admin.list_students') %}active{% endif %}">
+                    <i class="fas fa-users"></i>
+                    <span>Students</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{{ url_for('admin.list_doctors') }}"
+                    class="nav-link {% if request.path == url_for('admin.list_doctors') %}active{% endif %}">
+                    <i class="fas fa-user-tie"></i>
+                    <span>Faculty</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{{ url_for('admin.list_subjects') }}"
+                    class="nav-link {% if request.path == url_for('admin.list_subjects') %}active{% endif %}">
+                    <i class="fas fa-book"></i>
+                    <span>Courses</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{{ url_for('admin.list_exam_rooms') }}"
+                    class="nav-link {% if request.path == url_for('admin.list_exam_rooms') %}active{% endif %}">
+                    <i class="fas fa-door-open"></i>
+                    <span>Exam Rooms</span>
+                </a>
+            </li>
+        </ul>
+
+        <div class="user-menu">
+            <div class="user-info">
+                <div class="user-avatar">{{ session.user.name|first|upper }}</div>
+                <span>{{ session.user.name }}</span>
+                <div class="user-dropdown">
+                    <a href="{{ url_for('admin.admin_profile') }}" class="dropdown-item">
+                        <i class="fas fa-user-circle"></i> My Profile
+                    </a>
+                    <a href="{{ url_for('admin.admin_settings') }}" class="dropdown-item">
+                        <i class="fas fa-cog"></i> Settings
+                        <span class="badge bg-primary ms-2">New</span>
+                    </a>
+                    <div class="dropdown-divider"></div>
+                    <a href="#" class="dropdown-item">
+                        <i class="fas fa-question-circle"></i> Help
+                    </a>
+                </div>
+            </div>
+            <button class="logout-btn" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Logout</span>
+            </button>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <div class="container">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-col animated">
+                <div class="footer-logo">
+                    <i class="fas fa-university"></i>
+                    <div class="footer-logo-text">UNIVERSITY X</div>
+                </div>
+                <p class="footer-about">
+                    University X is a premier institution committed to excellence in education, research, and
+                    innovation.
+                    Our admin portal provides comprehensive tools for managing university operations.
+                </p>
+                <div class="footer-social">
+                    <a href="#" class="social-icon"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" class="social-icon"><i class="fab fa-twitter"></i></a>
+                    <a href="#" class="social-icon"><i class="fab fa-linkedin-in"></i></a>
+                    <a href="#" class="social-icon"><i class="fab fa-instagram"></i></a>
+                    <a href="#" class="social-icon"><i class="fab fa-youtube"></i></a>
+                </div>
+            </div>
+
+            <div class="footer-col animated delay-1">
+                <h3 class="footer-heading">Quick Links</h3>
+                <ul class="footer-links">
+                    <li><a href="{{ url_for('admin.dashboard') }}"><i class="fas fa-chevron-right"></i> Dashboard</a>
+                    </li>
+                    <li><a href="{{ url_for('admin.list_students') }}"><i class="fas fa-chevron-right"></i> Student
+                            Management</a></li>
+                    <li><a href="{{ url_for('admin.list_doctors') }}"><i class="fas fa-chevron-right"></i> Faculty
+                            Management</a></li>
+                    <li><a href="{{ url_for('admin.list_subjects') }}"><i class="fas fa-chevron-right"></i> Course
+                            Catalog</a></li>
+                    <li><a href="{{ url_for('admin.list_exam_rooms') }}"><i class="fas fa-chevron-right"></i> Exam
+                            Scheduling</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-col animated delay-2">
+                <h3 class="footer-heading">Resources</h3>
+                <ul class="footer-links">
+                    <li><a href="#"><i class="fas fa-chevron-right"></i> Academic Calendar</a></li>
+                    <li><a href="#"><i class="fas fa-chevron-right"></i> Policy Documents</a></li>
+                    <li><a href="#"><i class="fas fa-chevron-right"></i> Faculty Handbook</a></li>
+                    <li><a href="#"><i class="fas fa-chevron-right"></i> Student Handbook</a></li>
+                    <li><a href="#"><i class="fas fa-chevron-right"></i> Administrative Forms</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-col animated delay-3">
+                <h3 class="footer-heading">Contact Us</h3>
+                <div class="footer-contact-item">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <div class="footer-contact-text">
+                        123 University Avenue<br>
+                        Academic City, XY 12345
+                    </div>
+                </div>
+                <div class="footer-contact-item">
+                    <i class="fas fa-phone-alt"></i>
+                    <div class="footer-contact-text">
+                        +1 (555) 123-4567<br>
+                        Mon-Fri, 9am-5pm
+                    </div>
+                </div>
+                <div class="footer-contact-item">
+                    <i class="fas fa-envelope"></i>
+                    <div class="footer-contact-text">
+                        admin@universityx.edu<br>
+                        support@universityx.edu
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <p>&copy; 2025 University X. All Rights Reserved. | <a href="#" style="color: var(--gold);">Privacy
+                    Policy</a> | <a href="#" style="color: var(--gold);">Terms of Service</a></p>
+        </div>
+    </footer>
+
+    <script>
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                window.location.href = "{{ url_for('auth.logout') }}";
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('tbody tr').forEach(row => {
+                const editLink = row.querySelector('.action-links a:not(.delete)');
+                if (editLink) {
+                    row.style.cursor = 'pointer';
+                    row.addEventListener('click', (e) => {
+                        if (!e.target.closest('a') && !e.target.closest('button')) {
+                            window.location.href = editLink.href;
+                        }
+                    });
+                }
+            });
+        });
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const currentPath = window.location.pathname;
+            document.querySelectorAll('.nav-link').forEach(link => {
+                if (link.getAttribute('href') === currentPath) {
+                    link.classList.add('active');
+                }
+            });
+        });
+
+        function initDashboardCards() {
+            document.querySelectorAll('.card').forEach(card => {
+                const header = card.querySelector('.card-header span')?.textContent.trim();
+                let url = '';
+
+                switch (header) {
+                    case 'Students':
+                        url = "{{ url_for('admin.list_students') }}";
+                        break;
+                    case 'Faculty':
+                        url = "{{ url_for('admin.list_doctors') }}";
+                        break;
+                    case 'Courses':
+                        url = "{{ url_for('admin.list_subjects') }}";
+                        break;
+                    case 'Exam Rooms':
+                        url = "{{ url_for('admin.list_exam_rooms') }}";
+                        break;
+                }
+
+                if (url) {
+                    card.style.cursor = 'pointer';
+                    card.addEventListener('click', () => {
+                        window.location.href = url;
+                    });
+                }
+            });
+        }
+
+        if (window.location.pathname === "{{ url_for('admin.dashboard') }}") {
+            document.addEventListener('DOMContentLoaded', initDashboardCards);
+        }
+
+        document.querySelectorAll('.user-info').forEach(userInfo => {
+            userInfo.addEventListener('mouseenter', () => {
+                userInfo.querySelector('.user-dropdown').style.display = 'block';
+            });
+            userInfo.addEventListener('mouseleave', () => {
+                userInfo.querySelector('.user-dropdown').style.display = 'none';
+            });
+        });
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+
+</html>

@@ -1,0 +1,29 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Add Major - Admin{% endblock %}
+
+{% block content %}
+<div style="max-width: 600px; margin: 2rem auto; padding: 1.5rem; border: 1px solid #e0e0e0; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid #eee;">
+        <h2 style="font-size: 1.5rem; color: #333; margin: 0;">Add New Major</h2>
+        <a href="{{ url_for('admin.list_majors') }}" style="text-decoration: none; color: #2563eb; font-weight: 500;">← Back to List</a>
+    </div>
+    
+    <form method="POST" action="{{ url_for('admin.add_major') }}" style="display: grid; gap: 1.2rem;">
+        <div>
+            <label for="name" style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #555;">Major Name</label>
+            <input type="text" id="name" name="name" required style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem;">
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <input type="checkbox" id="is_open" name="is_open" value="true" checked style="width: 1.25rem; height: 1.25rem;">
+            <label for="is_open" style="font-weight: 500; color: #555;">Registration Open</label>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 1rem;">
+            <a href="{{ url_for('admin.list_majors') }}" style="padding: 0.75rem 1.5rem; background-color: #f3f4f6; color: #333; border: none; border-radius: 4px; font-weight: 500; cursor: pointer; text-decoration: none;">Cancel</a>
+            <button type="submit" style="padding: 0.75rem 1.5rem; background-color: #2563eb; color: white; border: none; border-radius: 4px; font-weight: 500; cursor: pointer;">Add Major</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

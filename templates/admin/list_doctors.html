@@ -1,0 +1,374 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Doctors Management{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h1 class="page-title">
+            <i class="fas fa-user-md"></i>
+            Doctors List
+        </h1>
+        <div class="action-buttons">
+            <a href="{{ url_for('admin.add_doctor') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i>
+                Add New Doctor
+            </a>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Search by doctor name..." class="search-input">
+                <button id="searchBtn" class="search-btn">
+                    <i class="fas fa-search"></i> Search
+                </button>
+                <button id="resetBtn" class="reset-btn">
+                    <i class="fas fa-times"></i> Reset
+                </button>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Stage</th>
+                            <th>Subjects</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="doctorsTableBody">
+                        {% for doctor in doctors %}
+                        <tr class="doctor-row">
+                            <td class="doctor-name">{{ doctor.name }}</td>
+                            <td>{{ doctor.email }}</td>
+                            <td>
+                                <span class="badge stage-badge">
+                                    Stage {{ doctor.stage }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if doctor.subject_names %}
+                                <div class="subject-tags">
+                                    {% for subject in doctor.subject_names %}
+                                    <span class="subject-tag">{{ subject }}</span>
+                                    {% endfor %}
+                                </div>
+                                {% else %}
+                                <span class="text-muted">No subjects assigned</span>
+                                {% endif %}
+                            </td>
+                            <td class="actions">
+                                <a href="{{ url_for('admin.edit_doctor', id=doctor._id) }}" class="btn-edit"
+                                    title="Edit">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{{ url_for('admin.delete_doctor', id=doctor._id) }}" class="btn-delete"
+                                    title="Delete" onclick="return confirmDelete()">
+                                    <i class="fas fa-trash-alt"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="5" class="empty-state">
+                                <i class="fas fa-user-md"></i>
+                                <p>No doctors found</p>
+                                <a href="{{ url_for('admin.add_doctor') }}" class="btn btn-primary">
+                                    <i class="fas fa-plus"></i>
+                                    Add First Doctor
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .data-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0;
+    }
+
+    .data-table th {
+        background-color: #f8f9fc;
+        color: #5a5c69;
+        font-weight: 700;
+        padding: 1rem;
+        text-align: left;
+        border-bottom: 1px solid #e3e6f0;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.05rem;
+    }
+
+    .data-table td {
+        padding: 1rem;
+        border-bottom: 1px solid #e3e6f0;
+        color: #6e707e;
+        vertical-align: middle;
+    }
+
+    .data-table tr:hover {
+        background-color: #f8f9fc;
+    }
+
+    .badge {
+        display: inline-block;
+        padding: 0.35em 0.65em;
+        font-size: 0.75em;
+        font-weight: 700;
+        line-height: 1;
+        text-align: center;
+        white-space: nowrap;
+        vertical-align: baseline;
+        border-radius: 0.25rem;
+    }
+
+    .stage-badge {
+        color: #fff;
+        background-color: #4e73df;
+    }
+
+    .subject-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .subject-tag {
+        background-color: #f8f9fc;
+        color: #4e73df;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        font-size: 0.75rem;
+        border: 1px solid #d1d3e2;
+    }
+
+    .actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .btn-edit,
+    .btn-delete {
+        width: 32px;
+        height: 32px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        text-decoration: none;
+        transition: all 0.2s;
+    }
+
+    .btn-edit {
+        color: #4e73df;
+        border: 1px solid #4e73df;
+    }
+
+    .btn-edit:hover {
+        background-color: #f0f4fe;
+    }
+
+    .btn-delete {
+        color: #e74a3b;
+        border: 1px solid #e74a3b;
+    }
+
+    .btn-delete:hover {
+        background-color: #fdf0ef;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 2rem;
+        color: #858796;
+    }
+
+    .empty-state i {
+        font-size: 2rem;
+        color: #dddfeb;
+        margin-bottom: 0.5rem;
+    }
+
+    .empty-state p {
+        margin: 0.5rem 0 1rem;
+    }
+
+    .search-box {
+        display: flex;
+        max-width: 600px;
+        margin-bottom: 1rem;
+        gap: 0.5rem;
+    }
+
+    .search-input {
+        flex: 1;
+        padding: 0.5rem 1rem;
+        border: 1px solid #d1d3e2;
+        border-radius: 0.35rem;
+        font-size: 0.875rem;
+        transition: border-color 0.15s ease-in-out;
+    }
+
+    .search-input:focus {
+        outline: none;
+        border-color: #bac8f3;
+        box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+    }
+
+    .search-btn,
+    .reset-btn {
+        padding: 0.5rem 1rem;
+        color: white;
+        border: none;
+        border-radius: 0.35rem;
+        cursor: pointer;
+        transition: background-color 0.15s ease-in-out;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .search-btn {
+        background-color: #4e73df;
+    }
+
+    .search-btn:hover {
+        background-color: #2e59d9;
+    }
+
+    .reset-btn {
+        background-color: #6c757d;
+    }
+
+    .reset-btn:hover {
+        background-color: #5a6268;
+    }
+
+    .hidden-row {
+        display: none;
+    }
+
+    .no-results {
+        text-align: center;
+        padding: 2rem;
+        color: #858796;
+    }
+
+    .no-results i {
+        font-size: 2rem;
+        color: #dddfeb;
+        margin-bottom: 0.5rem;
+    }
+
+    @media (max-width: 768px) {
+        .data-table {
+            display: block;
+            overflow-x: auto;
+        }
+
+        .subject-tags {
+            min-width: 150px;
+        }
+
+        .search-box {
+            flex-direction: column;
+        }
+    }
+</style>
+
+<script>
+    function confirmDelete() {
+        return confirm('Are you sure you want to delete this doctor? This action cannot be undone.');
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const rows = document.querySelectorAll('.doctor-row');
+        rows.forEach(row => {
+            const editLink = row.querySelector('.btn-edit');
+            if (editLink) {
+                row.style.cursor = 'pointer';
+                row.addEventListener('click', function (e) {
+                    if (!e.target.closest('.btn-edit') && !e.target.closest('.btn-delete')) {
+                        window.location.href = editLink.href;
+                    }
+                });
+            }
+        });
+
+        const searchInput = document.getElementById('searchInput');
+        const searchBtn = document.getElementById('searchBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const tableBody = document.getElementById('doctorsTableBody');
+        const originalRows = Array.from(document.querySelectorAll('.doctor-row'));
+
+        function performSearch() {
+            const searchTerm = searchInput.value.trim().toLowerCase();
+            let hasResults = false;
+
+            originalRows.forEach(row => {
+                row.style.display = 'none';
+            });
+
+            const existingNoResults = tableBody.querySelector('.no-results-row');
+            if (existingNoResults) {
+                tableBody.removeChild(existingNoResults);
+            }
+
+            if (searchTerm === '') {
+                originalRows.forEach(row => {
+                    row.style.display = '';
+                });
+                return;
+            }
+
+            const matchingRows = originalRows.filter(row => {
+                const name = row.querySelector('.doctor-name').textContent.toLowerCase();
+                return name.includes(searchTerm);
+            });
+
+            matchingRows.forEach(row => {
+                row.style.display = '';
+            });
+
+            if (matchingRows.length === 0) {
+                const noResultsRow = document.createElement('tr');
+                noResultsRow.className = 'no-results-row no-results';
+                noResultsRow.innerHTML = `
+                    <td colspan="5">
+                        <i class="fas fa-search"></i>
+                        <p>No doctors found matching "${searchTerm}"</p>
+                    </td>
+                `;
+                tableBody.appendChild(noResultsRow);
+            }
+        }
+
+        function resetSearch() {
+            searchInput.value = '';
+            performSearch();
+        }
+
+        searchBtn.addEventListener('click', performSearch);
+        resetBtn.addEventListener('click', resetSearch);
+        searchInput.addEventListener('keyup', function (e) {
+            if (e.key === 'Enter') {
+                performSearch();
+            }
+        });
+
+        performSearch();
+    });
+</script>
+{% endblock %}

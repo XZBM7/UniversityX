@@ -1,0 +1,208 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Edit Schedule - Admin{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h1 class="page-title">
+            <i class="fas fa-calendar-edit"></i>
+            Edit Schedule
+        </h1>
+        <div class="action-buttons">
+            <a href="{{ url_for('admin.list_schedules') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i>
+                Back to Schedules
+            </a>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Schedule Details</h3>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('admin.edit_schedule', id=schedule._id) }}" class="schedule-form"
+                id="editScheduleForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Doctor</label>
+                        <select name="doctor_id" class="form-select" required>
+                            {% for doctor in doctors %}
+                            <option value="{{ doctor._id }}" {% if doctor._id==schedule.doctor_id %}selected{% endif %}>
+                                {{ doctor.name }} (Stage {{ doctor.stage }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Subject</label>
+                        <select name="subject_id" class="form-select" required>
+                            {% for subject in subjects %}
+                            <option value="{{ subject._id }}" {% if subject._id==schedule.subject_id %}selected{% endif
+                                %}>
+                                {{ subject.name }} - Stage {{ subject.stage }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Day</label>
+                        <select name="day" class="form-select" required>
+                            <option value="Sunday" {% if schedule.day=="Sunday" %}selected{% endif %}>Sunday</option>
+                            <option value="Monday" {% if schedule.day=="Monday" %}selected{% endif %}>Monday</option>
+                            <option value="Tuesday" {% if schedule.day=="Tuesday" %}selected{% endif %}>Tuesday</option>
+                            <option value="Wednesday" {% if schedule.day=="Wednesday" %}selected{% endif %}>Wednesday
+                            </option>
+                            <option value="Thursday" {% if schedule.day=="Thursday" %}selected{% endif %}>Thursday
+                            </option>
+                            <option value="Friday" {% if schedule.day=="Friday" %}selected{% endif %}>Friday</option>
+                            <option value="Saturday" {% if schedule.day=="Saturday" %}selected{% endif %}>Saturday
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Time</label>
+                        <input type="time" name="time" class="form-control" value="{{ schedule.time }}" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Room</label>
+                        <input type="text" name="room" class="form-control" value="{{ schedule.room }}" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Term</label>
+                        <select name="term" class="form-select" required>
+                            <option value="First" {% if schedule.term=="First" %}selected{% endif %}>First Term</option>
+                            <option value="Second" {% if schedule.term=="Second" %}selected{% endif %}>Second Term
+                            </option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i>
+                        Update Schedule
+                    </button>
+                    <button type="reset" class="btn btn-secondary">
+                        <i class="fas fa-undo"></i>
+                        Reset Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    .schedule-form {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    .card-header {
+        background-color: #f8f9fc;
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid #e3e6f0;
+    }
+
+    .card-title {
+        font-size: 1.25rem;
+        margin: 0;
+        color: #5a5c69;
+    }
+
+    .form-row {
+        display: flex;
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .form-group {
+        flex: 1;
+        margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        color: #5a5c69;
+    }
+
+    .form-control,
+    .form-select {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #d1d3e2;
+        border-radius: 0.35rem;
+        font-size: 1rem;
+        transition: border-color 0.15s;
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+        border-color: #4e73df;
+        outline: 0;
+        box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+    }
+
+    .form-select {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 0.75rem center;
+        background-size: 16px 12px;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+        padding-top: 1rem;
+        border-top: 1px solid #e3e6f0;
+    }
+
+    @media (max-width: 768px) {
+        .form-row {
+            flex-direction: column;
+            gap: 0;
+        }
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const form = document.getElementById('editScheduleForm');
+        let formChanged = false;
+
+        form.querySelectorAll('input, select').forEach(element => {
+            element.addEventListener('change', () => {
+                formChanged = true;
+            });
+        });
+
+        window.addEventListener('beforeunload', function (e) {
+            if (formChanged) {
+                e.preventDefault();
+                e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
+            }
+        });
+
+        form.addEventListener('submit', function () {
+            formChanged = false;
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,179 @@
+{% extends "doctor/base.html" %}
+
+{% block title %}Teaching Schedule - Dr. {{ session['user']['name'] }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  .schedule-container {
+    background: white;
+    border-radius: 8px;
+    padding: 2rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    margin-top: 2rem;
+    overflow-x: auto;
+  }
+
+  .schedule-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #eee;
+  }
+
+  .schedule-title {
+    color: #166088;
+    margin: 0;
+  }
+
+  .schedule-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+  }
+
+  .schedule-table th {
+    background-color: #4a6fa5;
+    color: white;
+    padding: 1rem;
+    text-align: left;
+  }
+
+  .schedule-table td {
+    padding: 1rem;
+    border-bottom: 1px solid #eee;
+  }
+
+  .schedule-table tr:hover {
+    background-color: rgba(74, 111, 165, 0.05);
+  }
+
+  .term-badge {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+
+  .term-spring {
+    background-color: rgba(46, 204, 113, 0.2);
+    color: #2ecc71;
+  }
+
+  .term-fall {
+    background-color: rgba(155, 89, 182, 0.2);
+    color: #9b59b6;
+  }
+
+  .term-summer {
+    background-color: rgba(241, 196, 15, 0.2);
+    color: #f1c40f;
+  }
+
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 1.5rem;
+    color: #4a6fa5;
+    text-decoration: none;
+    font-weight: 600;
+  }
+
+  .empty-schedule {
+    text-align: center;
+    padding: 2rem;
+    color: #666;
+  }
+
+  .empty-schedule i {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    color: #ddd;
+  }
+
+  @media (max-width: 768px) {
+    .schedule-container {
+      padding: 1rem;
+    }
+
+    .schedule-table th,
+    .schedule-table td {
+      padding: 0.75rem;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="schedule-container">
+    <div class="schedule-header">
+      <h1 class="schedule-title">Your Teaching Schedule</h1>
+      <a href="{{ url_for('doctor.dashboard') }}" class="btn btn-outline">
+        <i class="fas fa-arrow-left"></i> Back to Dashboard
+      </a>
+    </div>
+
+    {% if schedules %}
+    <table class="schedule-table">
+      <thead>
+        <tr>
+          <th>Subject</th>
+          <th>Day</th>
+          <th>Time</th>
+          <th>Room</th>
+          <th>Term</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for schedule in schedules %}
+        <tr>
+          <td>
+            <strong>{{ schedule.subject_name }}</strong>
+          </td>
+          <td>{{ schedule.day }}</td>
+          <td>{{ schedule.time }}</td>
+          <td>{{ schedule.room }}</td>
+          <td>
+            <span class="term-badge term-{{ schedule.term|lower if schedule.term else 'spring' }}">
+              {{ schedule.term if schedule.term else 'Spring' }}
+            </span>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty-schedule">
+      <i class="fas fa-calendar-times"></i>
+      <p>No teaching schedule assigned yet</p>
+    </div>
+    {% endif %}
+
+    <div class="schedule-footer">
+      <a href="{{ url_for('doctor.dashboard') }}" class="back-link">
+        <i class="fas fa-arrow-left"></i> Return to Dashboard
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const rows = document.querySelectorAll('.schedule-table tbody tr');
+    rows.forEach(row => {
+      row.style.cursor = 'pointer';
+      row.addEventListener('click', function () {
+
+        rows.forEach(r => r.style.backgroundColor = '');
+        this.style.backgroundColor = 'rgba(74, 111, 165, 0.1)';
+      });
+    });
+  });
+</script>
+{% endblock %}

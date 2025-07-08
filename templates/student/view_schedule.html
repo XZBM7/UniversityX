@@ -1,0 +1,413 @@
+{% extends "student/base.html" %}
+
+{% block content %}
+<div class="schedule-container">
+  <div class="card fade-in">
+    <div class="schedule-header">
+      <h1><i class="fas fa-calendar-alt"></i> Your Class Schedule</h1>
+      <div class="schedule-actions">
+        <button class="btn btn-print" onclick="window.print()">
+          <i class="fas fa-print"></i> Print Schedule
+        </button>
+        <button class="btn btn-export" id="exportBtn">
+          <i class="fas fa-file-export"></i> Export
+        </button>
+      </div>
+    </div>
+
+    <div class="current-date">
+      <i class="fas fa-clock"></i> Current Date: <span id="currentDate"></span>
+    </div>
+
+    <div class="schedule-table-container">
+      <table class="schedule-table">
+        <thead>
+          <tr>
+            <th><i class="fas fa-book"></i> Subject</th>
+            <th><i class="fas fa-user-md"></i> Instructor</th>
+            <th><i class="fas fa-calendar-day"></i> Day</th>
+            <th><i class="fas fa-clock"></i> Time</th>
+            <th><i class="fas fa-door-open"></i> Room</th>
+            <th><i class="fas fa-info-circle"></i> Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for sch in schedules %}
+          <tr class="schedule-row">
+            <td>{{ sch.subject_name }}</td>
+            <td>{{ sch.doctor_name }}</td>
+            <td>{{ sch.day }}</td>
+            <td>{{ sch.time }}</td>
+            <td>{{ sch.room }}</td>
+            <td class="class-status">
+              <span class="status-badge upcoming">
+                <i class="fas fa-hourglass-start"></i> Upcoming
+              </span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="schedule-summary">
+      <div class="summary-card">
+        <i class="fas fa-layer-group"></i>
+        <div>
+          <h3>{{ schedules|length }}</h3>
+          <p>Total Courses</p>
+        </div>
+      </div>
+      <div class="summary-card">
+        <i class="fas fa-calendar-check"></i>
+        <div>
+          <h3 id="upcomingClasses">0</h3>
+          <p>Upcoming Today</p>
+        </div>
+      </div>
+      <div class="summary-card">
+        <i class="fas fa-chalkboard-teacher"></i>
+        <div>
+          <h3>{{ unique_doctors|length }}</h3>
+          <p>Different Instructors</p>
+        </div>
+      </div>
+    </div>
+
+    <a href="{{ url_for('student.dashboard') }}" class="btn btn-back">
+      <i class="fas fa-arrow-left"></i> Back to Dashboard
+    </a>
+  </div>
+</div>
+
+<style>
+  :root {
+    --primary-color: #4361ee;
+    --secondary-color: #3f37c9;
+    --success-color: #4cc9f0;
+    --warning-color: #f8961e;
+    --danger-color: #f94144;
+    --light-color: #f8f9fa;
+    --dark-color: #212529;
+    --border-radius: 8px;
+    --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --transition: all 0.3s ease;
+  }
+
+  .schedule-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+
+  .card {
+    background: white;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    padding: 30px;
+    margin-bottom: 30px;
+    transition: var(--transition);
+  }
+
+  .card:hover {
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+  }
+
+  .schedule-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+    flex-wrap: wrap;
+  }
+
+  h1 {
+    color: var(--primary-color);
+    font-weight: 600;
+    margin: 0;
+  }
+
+  .schedule-actions {
+    display: flex;
+    gap: 10px;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 10px 20px;
+    border-radius: var(--border-radius);
+    font-weight: 500;
+    transition: var(--transition);
+    border: none;
+    cursor: pointer;
+    box-shadow: var(--box-shadow);
+  }
+
+  .btn-print {
+    background-color: var(--primary-color);
+    color: white;
+  }
+
+  .btn-export {
+    background-color: var(--success-color);
+    color: white;
+  }
+
+  .btn-back {
+    background-color: var(--secondary-color);
+    color: white;
+    text-decoration: none;
+    margin-top: 20px;
+  }
+
+  .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  .btn i {
+    margin-right: 8px;
+  }
+
+  .current-date {
+    background-color: #f8f9fa;
+    padding: 12px 20px;
+    border-radius: var(--border-radius);
+    margin-bottom: 20px;
+    font-weight: 500;
+    color: var(--dark-color);
+  }
+
+  .current-date i {
+    color: var(--primary-color);
+    margin-right: 8px;
+  }
+
+  .schedule-table-container {
+    overflow-x: auto;
+    margin: 25px 0;
+  }
+
+  .schedule-table {
+    width: 100%;
+    border-collapse: collapse;
+    box-shadow: var(--box-shadow);
+    border-radius: var(--border-radius);
+    overflow: hidden;
+  }
+
+  .schedule-table thead tr {
+    background-color: var(--primary-color);
+    color: white;
+  }
+
+  .schedule-table th {
+    padding: 15px 20px;
+    text-align: left;
+    font-weight: 600;
+  }
+
+  .schedule-table td {
+    padding: 12px 20px;
+    border-bottom: 1px solid #e9ecef;
+  }
+
+  .schedule-table tbody tr:hover {
+    background-color: #f8f9fa;
+  }
+
+  .schedule-table th i {
+    margin-right: 8px;
+  }
+
+  .status-badge {
+    display: inline-block;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+  }
+
+  .upcoming {
+    background-color: rgba(76, 201, 240, 0.1);
+    color: #4cc9f0;
+  }
+
+  .ongoing {
+    background-color: rgba(72, 149, 239, 0.1);
+    color: #4895ef;
+  }
+
+  .completed {
+    background-color: rgba(233, 236, 239, 0.8);
+    color: #6c757d;
+  }
+
+  .schedule-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin: 30px 0;
+  }
+
+  .summary-card {
+    background: white;
+    border-radius: var(--border-radius);
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    box-shadow: var(--box-shadow);
+    transition: var(--transition);
+  }
+
+  .summary-card:hover {
+    transform: translateY(-5px);
+  }
+
+  .summary-card i {
+    font-size: 2rem;
+    color: var(--primary-color);
+  }
+
+  .summary-card h3 {
+    margin: 0;
+    font-size: 1.8rem;
+    color: var(--dark-color);
+  }
+
+  .summary-card p {
+    margin: 5px 0 0;
+    color: #6c757d;
+    font-size: 0.9rem;
+  }
+
+  .fade-in {
+    animation: fadeIn 0.8s ease-in;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @media (max-width: 768px) {
+    .schedule-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 15px;
+    }
+
+    .schedule-actions {
+      width: 100%;
+      flex-direction: column;
+    }
+
+    .btn {
+      width: 100%;
+      justify-content: center;
+    }
+
+    .schedule-table th,
+    .schedule-table td {
+      padding: 10px 15px;
+    }
+  }
+
+  @media print {
+
+    .schedule-actions,
+    .btn-back {
+      display: none;
+    }
+
+    .card {
+      box-shadow: none;
+    }
+
+    .schedule-table {
+      box-shadow: none;
+    }
+  }
+</style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    document.getElementById('currentDate').textContent = new Date().toLocaleDateString('en-US', options);
+
+    const today = new Date().toLocaleString('en-US', { weekday: 'long' });
+    const upcomingCount = document.querySelectorAll(`.schedule-table td:nth-child(3):contains("${today}")`).length;
+    document.getElementById('upcomingClasses').textContent = upcomingCount;
+
+    updateClassStatuses();
+
+    document.getElementById('exportBtn').addEventListener('click', function () {
+      alert('Export functionality would be implemented here. Could export as PDF, CSV, or image.');
+    });
+
+    const rows = document.querySelectorAll('.schedule-row');
+    rows.forEach((row, index) => {
+      row.style.animationDelay = `${index * 0.1}s`;
+      row.classList.add('fade-in');
+    });
+  });
+
+  function updateClassStatuses() {
+    const now = new Date();
+    const currentHour = now.getHours();
+    const currentMinutes = now.getMinutes();
+    const currentTime = currentHour * 60 + currentMinutes;
+
+    document.querySelectorAll('.schedule-row').forEach(row => {
+      const timeCell = row.querySelector('td:nth-child(4)');
+      const statusBadge = row.querySelector('.status-badge');
+
+      if (timeCell && statusBadge) {
+        const timeText = timeCell.textContent;
+        const [startTime, endTime] = timeText.split(' - ');
+
+        if (startTime && endTime) {
+          const [startHour, startMin] = startTime.split(':').map(Number);
+          const [endHour, endMin] = endTime.split(':').map(Number);
+
+          const classStart = startHour * 60 + startMin;
+          const classEnd = endHour * 60 + endMin;
+
+          if (currentTime < classStart) {
+            statusBadge.className = 'status-badge upcoming';
+            statusBadge.innerHTML = '<i class="fas fa-hourglass-start"></i> Upcoming';
+          } else if (currentTime >= classStart && currentTime <= classEnd) {
+            statusBadge.className = 'status-badge ongoing';
+            statusBadge.innerHTML = '<i class="fas fa-chalkboard-teacher"></i> In Progress';
+          } else {
+            statusBadge.className = 'status-badge completed';
+            statusBadge.innerHTML = '<i class="fas fa-check-circle"></i> Completed';
+          }
+        }
+      }
+    });
+  }
+
+  document.querySelectorAll = function (selector) {
+    if (selector.includes(':contains(')) {
+      const [tag, text] = selector.split(':contains(');
+      const searchText = text.replace(')', '');
+      const elements = document.querySelectorAll(tag);
+
+      return Array.from(elements).filter(el =>
+        el.textContent.includes(searchText)
+      );
+    }
+    return document.querySelectorAll.apply(document, arguments);
+  };
+</script>
+{% endblock %}

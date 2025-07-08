@@ -1,0 +1,231 @@
+{% extends "doctor/base.html" %}
+
+{% block title %}Quiz Results - {{ quiz.title }} - Dr. {{ session['user']['name'] }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  .quiz-results-container {
+    background: white;
+    border-radius: 8px;
+    padding: 2rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    margin: 2rem auto;
+    max-width: 1000px;
+  }
+
+  .quiz-header {
+    text-align: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #eee;
+  }
+
+  .quiz-title {
+    color: #166088;
+    margin-bottom: 0.5rem;
+  }
+
+  .quiz-meta {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .quiz-meta-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #666;
+  }
+
+  .results-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5rem 0;
+  }
+
+  .results-table th {
+    background-color: #4a6fa5;
+    color: white;
+    padding: 1rem;
+    text-align: left;
+  }
+
+  .results-table td {
+    padding: 1rem;
+    border-bottom: 1px solid #eee;
+  }
+
+  .results-table tr:hover {
+    background-color: rgba(74, 111, 165, 0.05);
+  }
+
+  .grade-cell {
+    font-weight: 600;
+  }
+
+  .grade-pass {
+    color: #28a745;
+  }
+
+  .grade-fail {
+    color: #dc3545;
+  }
+
+  .empty-results {
+    text-align: center;
+    padding: 2rem;
+    color: #666;
+  }
+
+  .empty-icon {
+    font-size: 2rem;
+    color: #ddd;
+    margin-bottom: 1rem;
+  }
+
+  .actions {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 2rem;
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.2s ease;
+  }
+
+  .btn-primary {
+    background-color: #4a6fa5;
+    color: white;
+  }
+
+  .btn-primary:hover {
+    background-color: #3a5a80;
+  }
+
+  .btn-outline {
+    background-color: white;
+    color: #4a6fa5;
+    border: 1px solid #4a6fa5;
+  }
+
+  .btn-outline:hover {
+    background-color: #f8f9fa;
+  }
+
+  @media (max-width: 768px) {
+    .quiz-meta {
+      flex-direction: column;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    .results-table {
+      display: block;
+      overflow-x: auto;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="quiz-results-container">
+    <div class="quiz-header">
+      <h1 class="quiz-title">Quiz Results</h1>
+      <h2>{{ quiz.title }}</h2>
+      <div class="quiz-meta">
+        <div class="quiz-meta-item">
+          <i class="fas fa-calendar-alt"></i>
+          <span>Start: {{ quiz.start_time.strftime('%Y-%m-%d %H:%M') }}</span>
+        </div>
+        <div class="quiz-meta-item">
+          <i class="fas fa-calendar-alt"></i>
+          <span>End: {{ quiz.end_time.strftime('%Y-%m-%d %H:%M') }}</span>
+        </div>
+        <div class="quiz-meta-item">
+          <i class="fas fa-clock"></i>
+          <span>Duration: {{ quiz.duration }} minutes</span>
+        </div>
+      </div>
+    </div>
+
+    {% if results|length == 0 %}
+    <div class="empty-results">
+      <div class="empty-icon">
+        <i class="fas fa-clipboard-list"></i>
+      </div>
+      <h3>No students have taken this quiz yet</h3>
+    </div>
+    {% else %}
+    <div class="table-responsive">
+      <table class="results-table">
+        <thead>
+          <tr>
+            <th>Student Name</th>
+            <th>Email</th>
+            <th>Grade</th>
+            <th>Submitted At</th>
+            <th>Percentage</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for res in results %}
+          <tr>
+            <td>{{ res.student_name }}</td>
+            <td>{{ res.student_email }}</td>
+            <td class="grade-cell {% if (res.score/res.total*100) >= 50 %}grade-pass{% else %}grade-fail{% endif %}">
+              {{ res.score }} / {{ res.total }}
+            </td>
+            <td>
+              {% if res.submitted_at %}
+              {{ res.submitted_at.strftime('%Y-%m-%d %H:%M') }}
+              {% else %}
+              N/A
+              {% endif %}
+            </td>
+            <td>{{ "%.1f"|format(res.score/res.total*100) }}%</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="actions">
+      <a href="{{ url_for('doctor.export_quiz_results', quiz_id=quiz._id) }}" class="btn btn-primary">
+        <i class="fas fa-download"></i> Export as CSV
+      </a>
+      <a href="{{ url_for('doctor.dashboard') }}" class="btn btn-outline">
+        <i class="fas fa-arrow-left"></i> Back to Dashboard
+      </a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const rows = document.querySelectorAll('.results-table tbody tr');
+    rows.forEach(row => {
+      row.style.cursor = 'pointer';
+      row.addEventListener('click', function () {
+        rows.forEach(r => r.style.backgroundColor = '');
+        this.style.backgroundColor = 'rgba(74, 111, 165, 0.1)';
+      });
+    });
+  });
+</script>
+{% endblock %}

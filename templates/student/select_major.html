@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Select Your Major | University</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --primary: #4361ee;
+      --primary-light: #4895ef;
+      --secondary: #3f37c9;
+      --dark: #1a1a2e;
+      --light: #f8f9fa;
+      --gray: #6c757d;
+      --success: #4cc9f0;
+      --white: #ffffff;
+      --shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', 'Roboto', sans-serif;
+      background-color: #f5f7ff;
+      color: var(--dark);
+      line-height: 1.6;
+      padding: 20px;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .selection-container {
+      width: 100%;
+      max-width: 700px;
+      background: var(--white);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .selection-header {
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      color: white;
+      padding: 30px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .selection-header::before {
+      content: '';
+      position: absolute;
+      top: -50px;
+      right: -50px;
+      width: 150px;
+      height: 150px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 50%;
+    }
+
+    .selection-header::after {
+      content: '';
+      position: absolute;
+      bottom: -80px;
+      left: -30px;
+      width: 200px;
+      height: 200px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 50%;
+    }
+
+    .selection-title {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .selection-subtitle {
+      font-size: 16px;
+      opacity: 0.9;
+      font-weight: 400;
+      position: relative;
+      z-index: 1;
+    }
+
+    .selection-body {
+      padding: 30px;
+    }
+
+    .majors-list {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      margin-bottom: 30px;
+    }
+
+    .major-option {
+      position: relative;
+    }
+
+    .major-option input[type="radio"] {
+      position: absolute;
+      opacity: 0;
+    }
+
+    .major-label {
+      display: flex;
+      align-items: center;
+      padding: 18px 20px;
+      background-color: var(--light);
+      border-radius: 12px;
+      cursor: pointer;
+      transition: var(--transition);
+      border: 2px solid transparent;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .major-label:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(67, 97, 238, 0.1);
+    }
+
+    .major-option input[type="radio"]:checked + .major-label {
+      background-color: rgba(67, 97, 238, 0.1);
+      border-color: var(--primary);
+    }
+
+    .major-option input[type="radio"]:checked + .major-label::before {
+      content: '\f00c';
+      font-family: 'Font Awesome 6 Free';
+      font-weight: 900;
+      position: absolute;
+      right: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--primary);
+      font-size: 16px;
+    }
+
+    .radio-custom {
+      width: 22px;
+      height: 22px;
+      border: 2px solid var(--gray);
+      border-radius: 50%;
+      margin-right: 15px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      transition: var(--transition);
+    }
+
+    .major-option input[type="radio"]:checked + .major-label .radio-custom {
+      border-color: var(--primary);
+      background-color: var(--primary);
+    }
+
+    .radio-custom::after {
+      content: '';
+      width: 10px;
+      height: 10px;
+      background: white;
+      border-radius: 50%;
+      transform: scale(0);
+      transition: var(--transition);
+    }
+
+    .major-option input[type="radio"]:checked + .major-label .radio-custom::after {
+      transform: scale(1);
+    }
+
+    .major-name {
+      font-weight: 600;
+      font-size: 17px;
+      color: var(--dark);
+    }
+
+    .buttons-container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .submit-btn, .back-btn {
+      padding: 16px;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .submit-btn {
+      background-color: var(--primary);
+      color: white;
+    }
+
+    .submit-btn:hover {
+      background-color: var(--secondary);
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(67, 97, 238, 0.3);
+    }
+
+    .back-btn {
+      background-color: transparent;
+      color: var(--gray);
+      border: 1px solid var(--gray);
+    }
+
+    .back-btn:hover {
+      background-color: rgba(108, 117, 125, 0.1);
+      color: var(--dark);
+      border-color: var(--dark);
+    }
+
+    @media (max-width: 768px) {
+      .selection-container {
+        margin: 20px;
+      }
+      
+      .selection-header {
+        padding: 25px 20px;
+      }
+      
+      .selection-title {
+        font-size: 24px;
+      }
+      
+      .selection-body {
+        padding: 25px 20px;
+      }
+    }
+
+    /* Animation */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .major-option {
+      animation: fadeIn 0.5s ease forwards;
+      opacity: 0;
+    }
+
+    .major-option:nth-child(1) { animation-delay: 0.1s; }
+    .major-option:nth-child(2) { animation-delay: 0.2s; }
+    .major-option:nth-child(3) { animation-delay: 0.3s; }
+    .major-option:nth-child(4) { animation-delay: 0.4s; }
+    .major-option:nth-child(5) { animation-delay: 0.5s; }
+    .major-option:nth-child(6) { animation-delay: 0.6s; }
+  </style>
+</head>
+<body>
+  <div class="selection-container">
+    <div class="selection-header">
+      <h1 class="selection-title">Choose Your Academic Path</h1>
+      <p class="selection-subtitle">Select the major that aligns with your career goals and interests</p>
+    </div>
+    
+    <div class="selection-body">
+      <form method="POST">
+        <div class="majors-list">
+          {% for major in majors %}
+          <div class="major-option">
+            <input type="radio" name="major" id="major-{{ major._id }}" value="{{ major._id }}"
+              {% if user.major_id and user.major_id == major._id %} checked {% endif %}>
+            <label class="major-label" for="major-{{ major._id }}">
+              <span class="radio-custom"></span>
+              <span class="major-name">{{ major.name }}</span>
+            </label>
+          </div>
+          {% endfor %}
+        </div>
+        
+        <div class="buttons-container">
+          <button type="submit" class="submit-btn">
+            <i class="fas fa-check-circle"></i> Confirm Selection
+          </button>
+          <a href="{{ url_for('student.dashboard') }}" class="back-btn">
+            <i class="fas fa-arrow-left"></i> Return to Dashboard
+          </a>
+        </div>
+      </form>
+    </div>
+  </div>
+</body>
+</html>

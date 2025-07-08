@@ -1,0 +1,374 @@
+{% extends "admin/base.html" %}
+
+{% block content %}
+<style>
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #f4f6f9;
+        margin: 0;
+        padding: 0;
+    }
+
+    .complaints-management {
+        max-width: 1200px;
+        margin: 40px auto;
+        padding: 20px;
+    }
+
+    .card {
+        background-color: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+    }
+
+    .card-header,
+    .card-footer {
+        background-color: #007bff;
+        color: white;
+        padding: 15px 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .card-footer {
+        background: #f8f9fa;
+        color: #333;
+        font-size: 0.9rem;
+    }
+
+    .card-body {
+        padding: 20px;
+    }
+
+    .btn {
+        padding: 8px 16px;
+        border-radius: 20px;
+        border: none;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 600;
+        transition: background-color 0.3s ease;
+    }
+
+    .btn-sm {
+        padding: 6px 12px;
+        font-size: 13px;
+    }
+
+    .btn-success {
+        background-color: #28a745;
+        color: white;
+    }
+
+    .btn-danger {
+        background-color: #dc3545;
+        color: white;
+    }
+
+    .btn-outline-primary {
+        background: transparent;
+        color: #007bff;
+        border: 1px solid #007bff;
+    }
+
+    .btn-outline-primary.active,
+    .btn-outline-primary:hover {
+        background-color: #007bff;
+        color: white;
+    }
+
+    .table-responsive {
+        overflow-x: auto;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+    }
+
+    thead {
+        background-color: #f1f1f1;
+        text-transform: uppercase;
+        font-weight: bold;
+    }
+
+    th,
+    td {
+        padding: 12px 15px;
+        border-bottom: 1px solid #ddd;
+        text-align: left;
+    }
+
+    tbody tr:hover {
+        background-color: #f9f9f9;
+    }
+
+    .badge {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: bold;
+        text-align: center;
+        min-width: 80px;
+    }
+
+    .bg-success {
+        background-color: #28a745;
+        color: white;
+    }
+
+    .bg-danger {
+        background-color: #dc3545;
+        color: white;
+    }
+
+    .bg-warning {
+        background-color: #ffc107;
+        color: #333;
+    }
+
+    .bg-secondary {
+        background-color: #6c757d;
+        color: white;
+    }
+
+    .bg-info {
+        background-color: #17a2b8;
+        color: white;
+    }
+
+    .search-container {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+    }
+
+    .filter-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .empty-state {
+        text-align: center;
+        color: #6c757d;
+        padding: 40px 0;
+    }
+
+    .empty-state i {
+        font-size: 3rem;
+        margin-bottom: 10px;
+        color: #dee2e6;
+    }
+
+    .pagination {
+        display: flex;
+        list-style: none;
+        padding-left: 0;
+        gap: 5px;
+        justify-content: center;
+        margin-top: 30px;
+    }
+
+    .pagination li {
+        display: inline;
+    }
+
+    .pagination .page-link {
+        display: block;
+        padding: 8px 12px;
+        background-color: white;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        color: #007bff;
+        text-decoration: none;
+    }
+
+    .pagination .page-item.active .page-link {
+        background-color: #007bff;
+        color: white;
+        font-weight: bold;
+    }
+
+    .pagination .page-item.disabled .page-link {
+        color: #aaa;
+        pointer-events: none;
+    }
+
+    .d-flex {
+        display: flex;
+        align-items: center;
+    }
+
+    .gap-2 {
+        gap: 8px;
+    }
+
+    .fw-semibold {
+        font-weight: 600;
+    }
+
+    .text-muted {
+        color: #6c757d;
+        font-size: 13px;
+    }
+
+    .align-middle {
+        vertical-align: middle;
+    }
+
+    .ms-1 {
+        margin-left: 4px;
+    }
+</style>
+
+<div class="complaints-management">
+    <div class="card">
+        <div class="card-header">
+            <h3>Complaints Management</h3>
+            <form method="POST">
+                <button type="submit" name="toggle_complaints"
+                    class="btn btn-sm {% if complaints_enabled %}btn-danger{% else %}btn-success{% endif %}">
+                    {% if complaints_enabled %}
+                    Disable System
+                    {% else %}
+                    Enable System
+                    {% endif %}
+                </button>
+            </form>
+        </div>
+
+        <div class="card-body">
+            <div class="search-container">
+                <form method="GET">
+                    <div class="filter-buttons">
+                        <button type="submit" name="filter" value="all"
+                            class="btn btn-sm btn-outline-primary {% if request.args.get('filter') != 'paid' %}active{% endif %}">
+                            Show All
+                        </button>
+                        <button type="submit" name="filter" value="paid"
+                            class="btn btn-sm btn-outline-primary {% if request.args.get('filter') == 'paid' %}active{% endif %}">
+                            Show Paid Only
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Student</th>
+                            <th>Subject</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                            <th>Payment</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for complaint in complaints %}
+                        {% if request.args.get('filter') != 'paid' or complaint.payment_status == 'paid' %}
+                        <tr>
+                            <td>#{{ complaint._id|string|truncate(8, True, '') }}</td>
+                            <td>
+                                <div class="fw-semibold">{{ complaint.student.name }}</div>
+                                <div class="text-muted">ID: {{ complaint.student.university_id }}</div>
+                            </td>
+                            <td>{{ complaint.subject.name }}</td>
+                            <td>{{ complaint.date.strftime('%Y-%m-%d') }}</td>
+                            <td>
+                                <span class="badge
+                                    {% if complaint.status == 'approved' %}bg-success
+                                    {% elif complaint.status == 'rejected' %}bg-danger
+                                    {% elif complaint.status == 'pending_payment' %}bg-warning
+                                    {% else %}bg-info{% endif %}">
+                                    {{ complaint.status|replace('_',' ')|title }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if complaint.payment_status == 'paid' %}
+                                <span class="badge bg-success">Paid ✅</span>
+                                {% else %}
+                                <span class="badge bg-secondary">Unpaid ❌</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="d-flex gap-2">
+                                    <a href="{{ url_for('admin.review_complaint', complaint_id=complaint._id) }}"
+                                        class="btn btn-sm btn-outline-primary" title="Review">🔍</a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endif %}
+                        {% else %}
+                        <tr>
+                            <td colspan="7">
+                                <div class="empty-state">
+                                    <i class="fas fa-inbox"></i>
+                                    <h4>No complaints found</h4>
+                                    <p class="text-muted">
+                                        {% if request.args.get('filter') == 'paid' %}
+                                        No paid complaints match your search criteria
+                                        {% else %}
+                                        No complaints match your search criteria
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            {% if pagination %}
+            <ul class="pagination">
+                {% if pagination.has_prev %}
+                <li class="page-item">
+                    <a class="page-link"
+                        href="{{ url_for('admin.manage_complaints', page=pagination.prev_num, filter=request.args.get('filter', '')) }}">&laquo;</a>
+                </li>
+                {% endif %}
+                {% for page_num in pagination.iter_pages() %}
+                {% if page_num %}
+                <li class="page-item {% if page_num == pagination.page %}active{% endif %}">
+                    <a class="page-link"
+                        href="{{ url_for('admin.manage_complaints', page=page_num, filter=request.args.get('filter', '')) }}">{{
+                        page_num }}</a>
+                </li>
+                {% else %}
+                <li class="page-item disabled"><span class="page-link">...</span></li>
+                {% endif %}
+                {% endfor %}
+                {% if pagination.has_next %}
+                <li class="page-item">
+                    <a class="page-link"
+                        href="{{ url_for('admin.manage_complaints', page=pagination.next_num, filter=request.args.get('filter', '')) }}">&raquo;</a>
+                </li>
+                {% endif %}
+            </ul>
+            {% endif %}
+        </div>
+
+        <div class="card-footer">
+            <div>
+                Showing <strong>{{ complaints|length }}</strong> complaint{% if complaints|length != 1 %}s{% endif %}
+                {% if request.args.get('filter') == 'paid' %}(Paid only){% endif %}
+            </div>
+            <div>
+                System Status:
+                <span class="badge {% if complaints_enabled %}bg-success{% else %}bg-secondary{% endif %}">
+                    {% if complaints_enabled %}Active{% else %}Disabled{% endif %}
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

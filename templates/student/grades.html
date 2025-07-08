@@ -1,0 +1,391 @@
+{% extends "student/base.html" %}
+
+{% block content %}
+<div class="container">
+  <div class="card fade-in">
+    <h1><i class="fas fa-graduation-cap"></i> Your Academic Performance</h1>
+
+    <div class="gpa-display">
+      <div class="gpa-circle pulse">
+        <span class="gpa-value">{{ "%.2f"|format(gpa) }}</span>
+        <span class="gpa-label">GPA Score</span>
+      </div>
+      <div class="grade-status 
+        {% if gpa >= 3.4 %}excellent
+        {% elif gpa >= 2.8 %}very-good
+        {% elif gpa >= 2.5 %}good
+        {% elif gpa >= 2 %}pass
+        {% else %}fail
+        {% endif %}">
+        {% if gpa >= 3.4 %}
+        <i class="fas fa-trophy"></i> Excellent
+        {% elif gpa >= 2.8 %}
+        <i class="fas fa-star"></i> Very Good
+        {% elif gpa >= 2.5 %}
+        <i class="fas fa-thumbs-up"></i> Good
+        {% elif gpa >= 2 %}
+        <i class="fas fa-check-circle"></i> Pass
+        {% else %}
+        <i class="fas fa-exclamation-triangle"></i> Needs Improvement
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="progress-container">
+      <div class="progress-bar" style="width: {{ (gpa/4)*100 }}%"></div>
+    </div>
+
+    <h3><i class="fas fa-book-open"></i> Course Details</h3>
+
+    <table>
+      <thead>
+        <tr>
+          <th><i class="fas fa-book"></i> Subject</th>
+          <th><i class="fas fa-percentage"></i> Grade</th>
+          <th><i class="fas fa-clock"></i> Credit Hours</th>
+          <th><i class="fas fa-font"></i> Letter</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in subjects_grades %}
+        <tr>
+          <td>{{ item.subject_name }}</td>
+          <td>{{ item.grade }}</td>
+          <td>{{ item.hours }}</td>
+          <td class="
+            {% if item.letter in ['A', 'A+', 'A-'] %}grade-A
+            {% elif item.letter in ['B', 'B+', 'B-'] %}grade-B
+            {% elif item.letter in ['C', 'C+', 'C-'] %}grade-C
+            {% elif item.letter in ['D', 'D+', 'D-'] %}grade-D
+            {% else %}grade-F
+            {% endif %}">
+            {{ item.letter }}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <a href="{{ url_for('student.dashboard') }}" class="btn">
+      <i class="fas fa-arrow-left"></i> Back to Dashboard
+    </a>
+  </div>
+</div>
+
+<style>
+  :root {
+    --primary-color: #4361ee;
+    --secondary-color: #3f37c9;
+    --success-color: #4cc9f0;
+    --warning-color: #f8961e;
+    --danger-color: #f94144;
+    --light-color: #f8f9fa;
+    --dark-color: #212529;
+    --border-radius: 8px;
+    --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --transition: all 0.3s ease;
+  }
+
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+
+  .card {
+    background: white;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    padding: 30px;
+    margin-bottom: 30px;
+    transition: var(--transition);
+  }
+
+  .card:hover {
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+  }
+
+  h1 {
+    color: var(--primary-color);
+    margin-bottom: 20px;
+    font-weight: 600;
+    text-align: center;
+  }
+
+  h3 {
+    margin: 20px 0;
+    font-weight: 500;
+  }
+
+  .gpa-display {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 30px 0;
+  }
+
+  .gpa-circle {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--box-shadow);
+    position: relative;
+    margin-right: 30px;
+  }
+
+  .gpa-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+  }
+
+  .gpa-label {
+    font-size: 1rem;
+    opacity: 0.9;
+  }
+
+  .grade-status {
+    padding: 15px 25px;
+    border-radius: var(--border-radius);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    box-shadow: var(--box-shadow);
+  }
+
+  .excellent {
+    background-color: #4cc9f0;
+    color: white;
+  }
+
+  .very-good {
+    background-color: #4895ef;
+    color: white;
+  }
+
+  .good {
+    background-color: #4361ee;
+    color: white;
+  }
+
+  .pass {
+    background-color: #3f37c9;
+    color: white;
+  }
+
+  .fail {
+    background-color: var(--danger-color);
+    color: white;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 25px 0;
+    overflow: hidden;
+    box-shadow: var(--box-shadow);
+    border-radius: var(--border-radius);
+  }
+
+  thead tr {
+    background-color: var(--primary-color);
+    color: white;
+    text-align: left;
+    font-weight: 600;
+  }
+
+  th,
+  td {
+    padding: 15px 20px;
+  }
+
+  tbody tr {
+    border-bottom: 1px solid #dddddd;
+    transition: var(--transition);
+  }
+
+  tbody tr:nth-of-type(even) {
+    background-color: #f8f9fa;
+  }
+
+  tbody tr:last-of-type {
+    border-bottom: 2px solid var(--primary-color);
+  }
+
+  tbody tr:hover {
+    background-color: #e9ecef;
+    transform: translateX(5px);
+  }
+
+  .grade-A {
+    color: #2ecc71;
+    font-weight: 600;
+  }
+
+  .grade-B {
+    color: #3498db;
+    font-weight: 600;
+  }
+
+  .grade-C {
+    color: #f39c12;
+    font-weight: 600;
+  }
+
+  .grade-D {
+    color: #e74c3c;
+    font-weight: 600;
+  }
+
+  .grade-F {
+    color: #c0392b;
+    font-weight: 600;
+  }
+
+  .btn {
+    display: inline-block;
+    padding: 12px 24px;
+    background-color: var(--primary-color);
+    color: white;
+    text-decoration: none;
+    border-radius: var(--border-radius);
+    font-weight: 500;
+    transition: var(--transition);
+    border: none;
+    cursor: pointer;
+    box-shadow: var(--box-shadow);
+  }
+
+  .btn:hover {
+    background-color: var(--secondary-color);
+    transform: translateY(-2px);
+  }
+
+  .btn i {
+    margin-right: 8px;
+  }
+
+  .progress-container {
+    width: 100%;
+    height: 8px;
+    background-color: #e0e0e0;
+    border-radius: 4px;
+    margin: 15px 0;
+    overflow: hidden;
+  }
+
+  .progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary-color), var(--success-color));
+    border-radius: 4px;
+    transition: width 0.5s ease;
+  }
+
+  @media (max-width: 768px) {
+    .gpa-display {
+      flex-direction: column;
+    }
+
+    .gpa-circle {
+      margin-right: 0;
+      margin-bottom: 20px;
+    }
+
+    th,
+    td {
+      padding: 10px 15px;
+    }
+  }
+
+  .fade-in {
+    animation: fadeIn 0.8s ease-in;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .pulse {
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0% {
+      transform: scale(1);
+    }
+
+    50% {
+      transform: scale(1.05);
+    }
+
+    100% {
+      transform: scale(1);
+    }
+  }
+</style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const rows = document.querySelectorAll('tbody tr');
+    rows.forEach((row, index) => {
+      row.style.animationDelay = `${index * 0.1}s`;
+      row.classList.add('fade-in');
+    });
+
+    const gpaValue = parseFloat("{{ gpa }}");
+    if (gpaValue >= 3.5) {
+      const gpaCircle = document.querySelector('.gpa-circle');
+      gpaCircle.addEventListener('click', function () {
+        triggerConfetti();
+      });
+    }
+  });
+
+  function triggerConfetti() {
+    const colors = ['#4361ee', '#3f37c9', '#4cc9f0', '#4895ef', '#3a0ca3'];
+    const confettiCount = 100;
+
+    for (let i = 0; i < confettiCount; i++) {
+      const confetti = document.createElement('div');
+      confetti.style.position = 'fixed';
+      confetti.style.width = '10px';
+      confetti.style.height = '10px';
+      confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+      confetti.style.borderRadius = '50%';
+      confetti.style.left = `${Math.random() * 100}vw`;
+      confetti.style.top = '-10px';
+      confetti.style.zIndex = '1000';
+      confetti.style.transform = `rotate(${Math.random() * 360}deg)`;
+
+      document.body.appendChild(confetti);
+
+      const animationDuration = Math.random() * 3 + 2;
+
+      confetti.animate([
+        { top: '-10px', opacity: 1 },
+        { top: `${Math.random() * 100 + 50}vh`, opacity: 0 }
+      ], {
+        duration: animationDuration * 1000,
+        easing: 'cubic-bezier(0.1, 0.8, 0.3, 1)'
+      });
+
+      setTimeout(() => {
+        confetti.remove();
+      }, animationDuration * 1000);
+    }
+  }
+</script>
+{% endblock %}
