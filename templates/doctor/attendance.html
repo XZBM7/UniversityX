@@ -1,0 +1,684 @@
+{% extends 'doctor/base.html' %}
+
+{% block content %}
+<div class="attendance-container">
+  <div class="attendance-header">
+    <div class="header-content">
+      <h1 class="attendance-title">
+        <i class="fas fa-clipboard-check"></i> Attendance Management
+      </h1>
+      <p class="attendance-subtitle">Track and manage student attendance for {{ lecture.subject_name }}</p>
+    </div>
+    <a href="{{ url_for('doctor.lectures') }}" class="back-btn">
+      <i class="fas fa-arrow-left"></i> Back to Lectures
+    </a>
+  </div>
+
+  <div class="lecture-info-card">
+    <div class="lecture-status-badge {% if lecture.is_active %}active{% else %}ended{% endif %}">
+      {% if lecture.is_active %}Active{% else %}Ended{% endif %}
+    </div>
+    <div class="lecture-details">
+      <div class="detail-row">
+        <span class="detail-label">Subject:</span>
+        <span class="detail-value">{{ lecture.subject_name }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Attendance Code:</span>
+        <span class="detail-value code">{{ lecture.code }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Time:</span>
+        <span class="detail-value">
+          {{ lecture.created_at.strftime('%b %d, %Y %I:%M %p') }}
+          {% if lecture.ended_at %}
+          - {{ lecture.ended_at.strftime('%b %d, %Y %I:%M %p') }}
+          {% endif %}
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <div class="search-section">
+    <div class="search-container">
+      <i class="fas fa-search search-icon"></i>
+      <input type="text" id="studentSearch" class="search-input" placeholder="Search by University ID or Name...">
+      <button class="search-btn" onclick="searchStudents()">Search</button>
+    </div>
+    <div class="filter-tabs">
+      <button class="filter-tab active" data-tab="attendance">Present Students ({{ attendance_records|length
+        }})</button>
+      <button class="filter-tab" data-tab="banned">Banned Students ({{ banned_students|length }})</button>
+    </div>
+  </div>
+
+  <div class="table-section" id="attendanceTableSection">
+    <div class="table-header">
+      <h3><i class="fas fa-user-check"></i> Present Students</h3>
+      <div class="table-actions">
+        <button class="export-btn" onclick="exportToExcel('attendance')">
+          <i class="fas fa-file-excel"></i> Export
+        </button>
+      </div>
+    </div>
+
+    {% if attendance_records %}
+    <div class="table-responsive">
+      <table class="attendance-table" id="attendanceTable">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Student Name</th>
+            <th>University ID</th>
+            <th>Attendance Time</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for record in attendance_records %}
+          <tr data-id="{{ record.university_id }}">
+            <td>{{ loop.index }}</td>
+            <td>{{ record.student_name }}</td>
+            <td>{{ record.university_id }}</td>
+            <td>{{ record.attended_at.strftime('%Y-%m-%d %H:%M') }}</td>
+            <td>
+              <button class="action-btn remove-btn"
+                onclick="removeAttendance('{{ record.university_id }}', '{{ lecture._id }}')">
+                <i class="fas fa-user-times"></i> Remove
+              </button>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <i class="fas fa-user-slash"></i>
+      <h4>No Attendance Records Found</h4>
+      <p>No students have attended this lecture yet.</p>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="table-section hidden" id="bannedTableSection">
+    <div class="table-header">
+      <h3><i class="fas fa-user-lock"></i> Banned Students (3+ Absences)</h3>
+      <div class="table-actions">
+        <button class="export-btn" onclick="exportToExcel('banned')">
+          <i class="fas fa-file-excel"></i> Export
+        </button>
+      </div>
+    </div>
+
+    {% if banned_students %}
+    <div class="table-responsive">
+      <table class="attendance-table" id="bannedTable">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Student Name</th>
+            <th>University ID</th>
+            <th>Absence Count</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for student in banned_students %}
+          <tr>
+            <td>{{ loop.index }}</td>
+            <td>{{ student.student_name }}</td>
+            <td>{{ student.university_id }}</td>
+            <td>{{ student.absent_count }}</td>
+            <td>
+              <button class="action-btn unban-btn"
+                onclick="unbanStudent('{{ student.university_id }}', '{{ lecture.subject_id }}')">
+                <i class="fas fa-user-check"></i> Unban
+              </button>
+              <form method="POST"
+                action="{{ url_for('doctor.toggle_ban', subject_id=lecture.subject_id, student_id=student.student_id, lecture_id=lecture._id) }}"
+                style="display:inline;">
+                <button type="submit" class="action-btn remove-btn"
+                  onclick="return confirm('Are you sure you want to deny access for this student?')">
+                  <i class="fas fa-ban"></i> Deny Access
+                </button>
+              </form>
+
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <i class="fas fa-user-check"></i>
+      <h4>No Banned Students</h4>
+      <p>All students in this subject have acceptable attendance records.</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<style>
+  :root {
+    --primary-color: #4361ee;
+    --secondary-color: #3f37c9;
+    --success-color: #4cc9f0;
+    --danger-color: #f72585;
+    --warning-color: #f8961e;
+    --info-color: #4895ef;
+    --dark-color: #212529;
+    --light-color: #f8f9fa;
+    --border-radius: 12px;
+    --box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  }
+
+  .attendance-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: var(--dark-color);
+  }
+
+  .attendance-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+  }
+
+  .header-content {
+    flex: 1;
+  }
+
+  .attendance-title {
+    font-size: 2.2rem;
+    font-weight: 700;
+    margin: 0;
+    color: var(--primary-color);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .attendance-title i {
+    font-size: 2rem;
+  }
+
+  .attendance-subtitle {
+    font-size: 1.1rem;
+    color: #6c757d;
+    margin: 0.5rem 0 0;
+  }
+
+  .back-btn {
+    background: white;
+    color: var(--primary-color);
+    border: 1px solid var(--primary-color);
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--border-radius);
+    font-size: 1rem;
+    font-weight: 500;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: var(--transition);
+  }
+
+  .back-btn:hover {
+    background: var(--primary-color);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: var(--box-shadow);
+  }
+
+  .lecture-info-card {
+    background: white;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    padding: 2rem;
+    margin-bottom: 2rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .lecture-status-badge {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    padding: 0.5rem 1rem;
+    border-radius: 50px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .lecture-status-badge.active {
+    background: rgba(76, 201, 240, 0.1);
+    color: var(--success-color);
+  }
+
+  .lecture-status-badge.ended {
+    background: rgba(149, 165, 166, 0.1);
+    color: #6c757d;
+  }
+
+  .lecture-details {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1rem;
+  }
+
+  .detail-row {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .detail-label {
+    font-size: 0.9rem;
+    color: #6c757d;
+    margin-bottom: 0.25rem;
+  }
+
+  .detail-value {
+    font-size: 1.1rem;
+    font-weight: 500;
+  }
+
+  .detail-value.code {
+    font-family: 'Roboto Mono', monospace;
+    color: var(--primary-color);
+    font-weight: 600;
+  }
+
+  .search-section {
+    background: white;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .search-container {
+    display: flex;
+    align-items: center;
+    background: var(--light-color);
+    border-radius: 50px;
+    padding: 0.5rem 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .search-icon {
+    color: #6c757d;
+    margin-right: 0.75rem;
+  }
+
+  .search-input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    padding: 0.75rem 0;
+    font-size: 1rem;
+    outline: none;
+  }
+
+  .search-btn {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 50px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+  }
+
+  .search-btn:hover {
+    background: var(--secondary-color);
+    transform: translateY(-2px);
+  }
+
+  .filter-tabs {
+    display: flex;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  }
+
+  .filter-tab {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    background: none;
+    font-size: 1rem;
+    font-weight: 500;
+    color: #6c757d;
+    cursor: pointer;
+    position: relative;
+    transition: var(--transition);
+  }
+
+  .filter-tab.active {
+    color: var(--primary-color);
+  }
+
+  .filter-tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: var(--primary-color);
+    border-radius: 3px 3px 0 0;
+  }
+
+  .filter-tab:hover:not(.active) {
+    color: var(--dark-color);
+  }
+
+  .table-section {
+    background: white;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    margin-bottom: 2rem;
+    overflow: hidden;
+  }
+
+  .table-section.hidden {
+    display: none;
+  }
+
+  .table-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  }
+
+  .table-header h3 {
+    font-size: 1.5rem;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .table-header h3 i {
+    color: var(--primary-color);
+  }
+
+  .table-actions {
+    display: flex;
+    gap: 0.75rem;
+  }
+
+  .export-btn {
+    background: white;
+    color: var(--primary-color);
+    border: 1px solid var(--primary-color);
+    padding: 0.5rem 1rem;
+    border-radius: var(--border-radius);
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .export-btn:hover {
+    background: var(--primary-color);
+    color: white;
+    transform: translateY(-2px);
+  }
+
+  .table-responsive {
+    overflow-x: auto;
+  }
+
+  .attendance-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .attendance-table th {
+    background: var(--light-color);
+    padding: 1rem 1.5rem;
+    text-align: left;
+    font-weight: 600;
+    color: var(--dark-color);
+    white-space: nowrap;
+  }
+
+  .attendance-table td {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
+    vertical-align: middle;
+  }
+
+  .attendance-table tbody tr:hover {
+    background: rgba(67, 97, 238, 0.03);
+  }
+
+  .action-btn {
+    padding: 0.5rem 1rem;
+    border-radius: var(--border-radius);
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    border: none;
+  }
+
+  .remove-btn {
+    background: rgba(247, 37, 133, 0.1);
+    color: var(--danger-color);
+  }
+
+  .remove-btn:hover {
+    background: rgba(247, 37, 133, 0.2);
+  }
+
+  .unban-btn {
+    background: rgba(76, 201, 240, 0.1);
+    color: var(--success-color);
+  }
+
+  .unban-btn:hover {
+    background: rgba(76, 201, 240, 0.2);
+  }
+
+  .empty-state {
+    padding: 3rem 2rem;
+    text-align: center;
+    color: #6c757d;
+  }
+
+  .empty-state i {
+    font-size: 3rem;
+    color: #e0e0e0;
+    margin-bottom: 1rem;
+  }
+
+  .empty-state h4 {
+    font-size: 1.5rem;
+    margin: 0.5rem 0;
+    color: var(--dark-color);
+  }
+
+  .empty-state p {
+    margin: 0;
+  }
+
+  @media (max-width: 992px) {
+    .attendance-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 1.5rem;
+    }
+
+    .back-btn {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .attendance-container {
+      padding: 1rem;
+    }
+
+    .attendance-title {
+      font-size: 1.8rem;
+    }
+
+    .lecture-details {
+      grid-template-columns: 1fr;
+    }
+
+    .filter-tabs {
+      overflow-x: auto;
+      padding-bottom: 0.5rem;
+    }
+
+    .filter-tab {
+      white-space: nowrap;
+    }
+
+    .table-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 1rem;
+      padding: 1rem;
+    }
+
+    .table-actions {
+      width: 100%;
+      justify-content: flex-end;
+    }
+
+    .attendance-table th,
+    .attendance-table td {
+      padding: 0.75rem;
+      font-size: 0.9rem;
+    }
+  }
+</style>
+
+<script>
+  document.querySelectorAll('.filter-tab').forEach(tab => {
+    tab.addEventListener('click', function () {
+      document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+
+      this.classList.add('active');
+
+      document.querySelectorAll('.table-section').forEach(section => {
+        section.classList.add('hidden');
+      });
+
+      const tabName = this.getAttribute('data-tab');
+      document.getElementById(`${tabName}TableSection`).classList.remove('hidden');
+    });
+  });
+
+  function searchStudents() {
+    const searchTerm = document.getElementById('studentSearch').value.toLowerCase();
+    const activeTab = document.querySelector('.filter-tab.active').getAttribute('data-tab');
+    const tableId = `${activeTab}Table`;
+    const table = document.getElementById(tableId);
+
+    if (!table) return;
+
+    const rows = table.getElementsByTagName('tr');
+
+    for (let i = 1; i < rows.length; i++) {
+      const nameCell = rows[i].getElementsByTagName('td')[1];
+      const idCell = rows[i].getElementsByTagName('td')[2];
+
+      if (nameCell && idCell) {
+        const nameText = nameCell.textContent.toLowerCase();
+        const idText = idCell.textContent.toLowerCase();
+
+        if (nameText.includes(searchTerm) || idText.includes(searchTerm)) {
+          rows[i].style.display = '';
+        } else {
+          rows[i].style.display = 'none';
+        }
+      }
+    }
+  }
+
+  document.getElementById('studentSearch').addEventListener('keyup', function (event) {
+    if (event.key === 'Enter') {
+      searchStudents();
+    }
+  });
+
+  function removeAttendance(universityId, lectureId) {
+    if (confirm(`Are you sure you want to remove attendance for student (ID: ${universityId})? This will count as an absence.`)) {
+      fetch(`/doctor/remove_attendance/${lectureId}/${universityId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            alert(data.message);
+            if (data.is_banned) {
+              location.reload();
+            } else {
+              const row = document.querySelector(`tr[data-id="${universityId}"]`);
+              if (row) row.remove();
+            }
+          } else {
+            alert(data.message);
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          alert('An error occurred while processing your request');
+        });
+    }
+  }
+
+  function unbanStudent(universityId, subjectId) {
+    if (confirm(`Are you sure you want to unban student (ID: ${universityId})? This will reset their absence count.`)) {
+      fetch(`/doctor/unban_student/${subjectId}/${universityId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            alert(data.message);
+            location.reload();
+          } else {
+            alert(data.message);
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          alert('An error occurred while processing your request');
+        });
+    }
+  }
+
+  function exportToExcel(type) {
+    alert(`Exporting ${type} data to Excel...`);
+  }
+</script>
+{% endblock %}

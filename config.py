@@ -10,20 +10,20 @@ quiz_results_collection = db.quiz_results
 complaints_collection = db.complaints
 payments_collection = db.payments
 
-admin_user = {
-    "name": "Admin - Omar",
-    "email": "Omar@a.com",
-    "password": generate_password_hash("Omar1234"),
-    "role": "admin"
-}
+# admin_user = {
+#     "name": "Admin - Omar",
+#     "email": "Omar@a.com",
+#     "password": generate_password_hash("Omar1234"),
+#     "role": "admin"
+# }
 
-existing_admin = users.find_one({"email": admin_user["email"]})
+# existing_admin = users.find_one({"email": admin_user["email"]})
 
-if not existing_admin:
-    users.insert_one(admin_user)
-    print("✅ Admin user added")
-else:
-    print("⚠️ Admin user already exists, skipping insertion")
+# if not existing_admin:
+#     users.insert_one(admin_user)
+#     print("✅ Admin user added")
+# else:
+#     print("⚠️ Admin user already exists, skipping insertion")
 
 db.users.update_many(
     {"role": "student", "payment_status": {"$exists": False}},
@@ -40,6 +40,6 @@ subjects_collection.update_one(
 
 users.delete_many({"email": "admin@example.com"})
 
-users.insert_one(admin_user)
+# users.insert_one(admin_user)
 
 # print("✅ Admin user added ")

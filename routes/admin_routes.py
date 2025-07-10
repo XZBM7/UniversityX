@@ -178,36 +178,51 @@ def list_doctors():
 def edit_doctor(id):
     doctor = users_collection.find_one({'_id': ObjectId(id), 'role': 'doctor'})
     if not doctor:
-        ('الدكتور غير موجود', 'danger')
+        flash('الدكتور غير موجود', 'danger')
         return redirect(url_for('admin.list_doctors'))
 
     if request.method == 'POST':
         name = request.form['name']
         email = request.form['email']
         stage = int(request.form['stage'])
-        
+
         selected_subjects = request.form.getlist('subjects')
         subject_ids = [ObjectId(sub_id) for sub_id in selected_subjects]
 
+        
         users_collection.update_one({'_id': ObjectId(id)}, {'$set': {
             'name': name,
             'email': email,
             'stage': stage,
             'subjects': subject_ids
         }})
+
         
-        ('تم تعديل بيانات الدكتور', 'success')
+        subjects_collection.update_many(
+            {'doctor_id': ObjectId(id)},
+            {'$unset': {'doctor_id': ""}}  
+        )
+
+        
+        for sub_id in subject_ids:
+            subjects_collection.update_one(
+                {'_id': sub_id},
+                {'$set': {'doctor_id': ObjectId(id)}}  
+            )
+
+        flash('تم تعديل بيانات الدكتور وربط المواد بنجاح', 'success')
         return redirect(url_for('admin.list_doctors'))
 
     all_subjects = list(subjects_collection.find())
     assigned_subject_ids = doctor.get('subjects', [])
-    
+
     for subject in all_subjects:
         subject['is_assigned'] = subject['_id'] in assigned_subject_ids
 
-    return render_template('admin/edit_doctor.html', 
-                         doctor=doctor, 
-                         subjects=all_subjects)
+    return render_template('admin/edit_doctor.html',
+                           doctor=doctor,
+                           subjects=all_subjects)
+
 
 @admin_bp.route('/delete_doctor/<id>')
 @admin_required
@@ -1013,7 +1028,7 @@ def review_complaint(complaint_id):
                          student=student,
                          subject=subject)
 
-#########################################
+
 
 users_collection = db.users
 tuition_fees_collection = db.tuition_fees  
@@ -1023,61 +1038,88 @@ payments_collection = db.payments
 @admin_bp.route('/manage_fees', methods=['GET', 'POST'])
 @admin_required
 def manage_fees():
-    fees_settings = db.fees_settings.find_one({})
-    if not fees_settings:
-        fees_settings = {}
+    fees_settings = db.fees_settings.find_one({}) or {}
 
     if request.method == 'POST':
-        if 'student_id' in request.form:  
-            student_id = ObjectId(request.form['student_id'])
-            stage = int(request.form['stage'])
-            amount = float(request.form['amount'])
-            
-            payment_data = {
-                'student_id': student_id,
-                'amount': amount,
-                'stage': stage,
-                'payment_date': datetime.datetime.utcnow(),
-                'method': 'admin',
-                'status': 'completed',
-                'transaction_id': f"ADM{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}",
-                'admin_id': ObjectId(session['user']['id'])
-            }
-            db.payments.insert_one(payment_data)
-
-            db.users.update_one(
-                {'_id': student_id},
-                {'$set': {
-                    'paid_stage': stage,
-                    'last_payment_date': datetime.datetime.utcnow()
-                }}
-            )
-
-            flash(f'Payment of {amount} EGP for stage {stage} recorded successfully.', 'success')
-            return redirect(url_for('admin.students_fees'))
-        
-        else:  
-            stage_1_fee = float(request.form.get('stage_1_fee', 0))
-            stage_2_fee = float(request.form.get('stage_2_fee', 0))
-            stage_3_fee = float(request.form.get('stage_3_fee', 0))
-            stage_4_fee = float(request.form.get('stage_4_fee', 0))
-
-            new_settings = {
-                'stage_1': stage_1_fee,
-                'stage_2': stage_2_fee,
-                'stage_3': stage_3_fee,
-                'stage_4': stage_4_fee
-            }
+        if 'toggle_payment_required' in request.form:
+            new_status = not fees_settings.get('is_payment_required', True)
 
             if fees_settings:
-                db.fees_settings.update_one({'_id': fees_settings['_id']}, {'$set': new_settings})
+                db.fees_settings.update_one(
+                    {'_id': fees_settings['_id']},
+                    {'$set': {'is_payment_required': new_status}}
+                )
             else:
-                db.fees_settings.insert_one(new_settings)
+                db.fees_settings.insert_one({'is_payment_required': new_status})
 
-            flash('Fees updated successfully.', 'success')
+            flash(f"Payment requirement {'enabled' if new_status else 'disabled'} successfully.", 'success')
             return redirect(url_for('admin.manage_fees'))
 
+        elif 'student_id' in request.form:
+            try:
+                student_id = ObjectId(request.form['student_id'])
+                stage = int(request.form['stage'])
+                amount = float(request.form['amount'])
+
+                payment_data = {
+                    'student_id': student_id,
+                    'amount': amount,
+                    'stage': stage,
+                    'payment_date': datetime.datetime.utcnow(),
+                    'method': 'admin',
+                    'status': 'completed',
+                    'transaction_id': f"ADM{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}",
+                    'admin_id': ObjectId(session['user']['id'])
+                }
+
+                db.payments.insert_one(payment_data)
+
+                db.users.update_one(
+                    {'_id': student_id},
+                    {'$set': {
+                        'paid_stage': stage,
+                        'last_payment_date': datetime.datetime.utcnow()
+                    }}
+                )
+
+                flash(f'Payment of {amount} EGP for stage {stage} recorded successfully.', 'success')
+                return redirect(url_for('admin.students_fees'))
+
+            except Exception as e:
+                traceback.print_exc()
+                flash("Error while recording payment. Please check input values.", 'danger')
+                return redirect(url_for('admin.manage_fees'))
+
+        else:
+            try:
+                stage_1_fee = float(request.form.get('stage_1_fee', 0))
+                stage_2_fee = float(request.form.get('stage_2_fee', 0))
+                stage_3_fee = float(request.form.get('stage_3_fee', 0))
+                stage_4_fee = float(request.form.get('stage_4_fee', 0))
+
+                new_settings = {
+                    'stage_1': stage_1_fee,
+                    'stage_2': stage_2_fee,
+                    'stage_3': stage_3_fee,
+                    'stage_4': stage_4_fee,
+                    'is_payment_required': fees_settings.get('is_payment_required', True)
+                }
+
+                if fees_settings:
+                    db.fees_settings.update_one({'_id': fees_settings['_id']}, {'$set': new_settings})
+                else:
+                    db.fees_settings.insert_one(new_settings)
+
+                flash('Fees updated successfully.', 'success')
+                return redirect(url_for('admin.manage_fees'))
+
+            except Exception as e:
+                traceback.print_exc()
+                flash("Error while updating fees. Please ensure values are correct.", 'danger')
+                return redirect(url_for('admin.manage_fees'))
+
     return render_template('admin/manage_fees.html', fees=fees_settings)
+
 
 @admin_bp.route('/students_fees')
 @admin_required

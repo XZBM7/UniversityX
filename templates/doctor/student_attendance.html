@@ -1,0 +1,106 @@
+{% extends 'doctor/base.html' %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Student Attendance Record - {{ subject.name }}</h2>
+    <a href="{{ url_for('doctor.lectures') }}" class="btn btn-outline-secondary">
+      <i class="fas fa-arrow-left"></i> Back
+    </a>
+  </div>
+
+  <div class="card shadow-sm">
+    <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+      <h4 class="mb-0">Attendance Statistics</h4>
+      <span>Total Lectures: {{ attendance_data[0].total_lectures if attendance_data else 0 }}</span>
+    </div>
+    <div class="card-body">
+      {% if attendance_data %}
+      <div class="table-responsive">
+        <table class="table table-hover align-middle text-center">
+          <thead class="table-light">
+            <tr>
+              <th>#</th>
+              <th>Student Name</th>
+              <th>University ID</th>
+              <th>Attendance Count</th>
+              <th>Absence Count</th>
+              <th>Attendance %</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for student in attendance_data %}
+            <tr>
+              <td>{{ loop.index }}</td>
+              <td>{{ student.student_name }}</td>
+              <td>{{ student.university_id }}</td>
+              <td>{{ student.attended }}</td>
+              <td>{{ student.absent }}</td>
+              <td style="min-width: 160px;">
+                {% set percentage = (student.attended / student.total_lectures * 100) if student.total_lectures > 0 else
+                0 %}
+                <div class="progress" style="height: 22px;">
+                  <div class="progress-bar 
+                    {% if percentage >= 75 %}bg-success
+                    {% elif percentage >= 50 %}bg-warning
+                    {% else %}bg-danger{% endif %}" role="progressbar" aria-valuenow="{{ percentage }}"
+                    aria-valuemin="0" aria-valuemax="100">
+                    {{ "%.1f"|format(percentage) }}%
+                  </div>
+                </div>
+              </td>
+              <td>
+                {% if student.is_banned %}
+                <span class="badge bg-danger">Banned</span>
+                {% else %}
+                <span class="badge bg-success">Active</span>
+                {% endif %}
+              </td>
+              <td>
+                <form method="POST"
+                  action="{{ url_for('doctor.toggle_ban', subject_id=subject._id, student_id=student.student_id) }}"
+                  class="d-inline">
+                  <button type="submit" class="btn btn-sm 
+                    {% if student.is_banned %}btn-success
+                    {% else %}btn-danger{% endif %}">
+                    {% if student.is_banned %}
+                    <i class="fas fa-unlock"></i> Unban
+                    {% else %}
+                    <i class="fas fa-lock"></i> Ban
+                    {% endif %}
+                  </button>
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="alert alert-info text-center">No students are enrolled in this subject.</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<style>
+  h2 {
+    font-weight: 700;
+  }
+
+  .progress {
+    border-radius: 12px;
+  }
+
+  .progress-bar {
+    font-weight: 600;
+    line-height: 22px;
+  }
+
+  .btn-sm {
+    min-width: 90px;
+  }
+</style>
+{% endblock %}

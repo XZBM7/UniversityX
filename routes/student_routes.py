@@ -5,6 +5,8 @@ from config import db
 import datetime
 from config import quiz_results_collection
 from config import complaints_collection , payments_collection
+import datetime
+
 
 
 student_bp = Blueprint('student', __name__)
@@ -32,7 +34,6 @@ def student_required(func):
         
         student_id = ObjectId(session['user']['id'])
         student = db.users.find_one({'_id': student_id})
-
         if not student:
             flash('لم يتم العثور على بيانات الطالب', 'danger')
             return redirect(url_for('auth.login'))
@@ -44,16 +45,20 @@ def student_required(func):
             'static'
         ]
 
-        paid_status = student.get('payment_status')
-        paid_stage = student.get('paid_stage')
-        current_stage = student.get('stage')
+        fees_settings = db.fees_settings.find_one({})
+        is_payment_required = fees_settings.get('is_payment_required', True) if fees_settings else True
 
-        if (paid_status != 'paid' or paid_stage != current_stage) and request.endpoint not in allowed_endpoints:
-            flash('يجب سداد الرسوم الدراسية للمرحلة الحالية أولاً للوصول إلى المنصة', 'warning')
-            return redirect(url_for('student.pay_fees'))
+        if is_payment_required:
+            paid_status = student.get('payment_status')
+            paid_stage = student.get('paid_stage')
+            current_stage = student.get('stage')
+
+            if (paid_status != 'paid' or paid_stage != current_stage) and request.endpoint not in allowed_endpoints:
+                flash('يجب سداد الرسوم الدراسية للمرحلة الحالية أولاً للوصول إلى المنصة', 'warning')
+                return redirect(url_for('student.pay_fees'))
 
         return func(*args, **kwargs)
-    
+
     return decorated_function
 
 
@@ -160,7 +165,7 @@ def view_schedule():
 
     return render_template('student/view_schedule.html', schedules=schedules, user=student)
 
-
+from datetime import datetime, date
 @student_bp.route('/exam_rooms')
 @student_required
 def exam_rooms():
@@ -174,7 +179,8 @@ def exam_rooms():
         subject = subjects_collection.find_one({'_id': room['subject_id']})
         room['subject_name'] = subject['name'] if subject else 'غير معروف'
         
-        if 'exam_date' in room and isinstance(room['exam_date'], (datetime.datetime, datetime.date)):
+        
+        if 'exam_date' in room and isinstance(room['exam_date'], (datetime, date)):
             room['formatted_date'] = room['exam_date'].strftime('%Y-%m-%d')
         else:
             room['formatted_date'] = 'غير محدد'
@@ -184,20 +190,24 @@ def exam_rooms():
     return render_template('student/exam_rooms.html', rooms=rooms, user=student)
 
 
+
 @student_bp.route('/grades')
 @student_required
 def grades():
     student_id = ObjectId(session['user']['id'])
     student = users_collection.find_one({'_id': student_id})
 
+    
     grades = list(grades_collection.find({
         'student_id': student_id,
         'published': True
-    }))
+    }).sort('academic_year', 1))  
 
     subjects_grades = []
     total_points = 0
     total_hours = 0
+    completed_hours = 0  
+    passed_subjects_count = 0  
 
     def calculate_gpa_point(grade):
         if grade >= 90:
@@ -219,6 +229,7 @@ def grades():
         else:
             return 0.0, "F"
 
+    
     for grade_entry in grades:
         subject = subjects_collection.find_one({'_id': grade_entry['subject_id']})
         if subject:
@@ -227,19 +238,60 @@ def grades():
             gpa_point, letter = calculate_gpa_point(grade_value)
 
             total_hours += hours
+            if letter != "F":  
+                completed_hours += hours
+                passed_subjects_count += 1
+
             total_points += gpa_point * hours
 
             subjects_grades.append({
                 'subject_name': subject['name'],
                 'grade': grade_value,
                 'hours': hours,
-                'letter': letter
+                'letter': letter,
+                'academic_year': grade_entry.get('academic_year', 'غير محدد'),
+                'semester': grade_entry.get('semester', 'غير محدد')
             })
 
+    
     gpa = (total_points / total_hours) if total_hours > 0 else 0
 
-    return render_template('student/grades.html', subjects_grades=subjects_grades, gpa=gpa, user=student)
+    
+    
+    stage = 1
+    if passed_subjects_count >= 36:  
+        stage = 4
+    elif passed_subjects_count >= 24:  
+        stage = 3
+    elif passed_subjects_count >= 12:  
+        stage = 2
 
+    
+    if student.get('stage') != stage:
+        users_collection.update_one(
+            {'_id': student_id},
+            {'$set': {'stage': stage}}
+        )
+        student['stage'] = stage  
+
+    
+    graduation_status ="Not yet graduated"
+    if passed_subjects_count >= 48:  
+        graduation_status = "متخرج بنجاح"
+        
+        users_collection.update_one(
+            {'_id': student_id},
+            {'$set': {'graduation_status': 'graduated'}}
+        )
+
+    return render_template('student/grades.html', 
+                         subjects_grades=subjects_grades, 
+                         gpa=gpa,
+                         completed_hours=completed_hours,
+                         passed_subjects_count=passed_subjects_count,
+                         stage=stage,
+                         graduation_status=graduation_status,
+                         user=student)
 
 
 @student_bp.route('/chat/<doctor_id>', methods=['GET', 'POST'])
@@ -254,8 +306,7 @@ def chat(doctor_id):
             'sender_id': student_id,
             'receiver_id': doctor_oid,
             'message': message_text,
-            'timestamp': datetime.datetime.now()
-
+            'timestamp': datetime.now()  
         })
         return redirect(url_for('student.chat', doctor_id=doctor_id))
 
@@ -271,8 +322,7 @@ def chat(doctor_id):
 
     return render_template('student/chat.html', messages=messages, doctor=doctor, user=student)
 
-import datetime
-from dateutil import parser
+
 
 @student_bp.route('/quizzes')
 @student_required
@@ -283,7 +333,7 @@ def quizzes():
     selected_subject_ids = student.get('subjects', [])
     quizzes = list(quizzes_collection.find({'subject_id': {'$in': selected_subject_ids}}))
 
-    now = datetime.datetime.utcnow()
+    now = datetime.utcnow()  
 
     for quiz in quizzes:
         quiz['_id'] = str(quiz['_id'])
@@ -307,6 +357,7 @@ def quizzes():
         quiz['end_time_formatted'] = end.strftime('%Y-%m-%d %H:%M')
 
     return render_template('student/quizzes.html', quizzes=quizzes, user=student)
+
 
 
 
@@ -334,7 +385,7 @@ def take_quiz(quiz_id):
         return redirect(url_for('student.quizzes'))
 
     def ensure_datetime(value):
-        if isinstance(value, datetime.datetime):
+        if isinstance(value, datetime):  
             return value
         elif isinstance(value, str):
             return parser.isoparse(value)
@@ -342,9 +393,7 @@ def take_quiz(quiz_id):
 
     start = ensure_datetime(quiz.get('start_time'))
     end = ensure_datetime(quiz.get('end_time'))
-    now = datetime.datetime.utcnow()
-
-
+    now = datetime.utcnow()  
 
     if request.method == 'POST':
         score = 0
@@ -367,7 +416,7 @@ def take_quiz(quiz_id):
                 '$set': {
                     'score': score,
                     'total': total,
-                    'submitted_at': datetime.datetime.utcnow()
+                    'submitted_at': datetime.utcnow()  
                 }
             },
             upsert=True
@@ -376,6 +425,7 @@ def take_quiz(quiz_id):
         return redirect(url_for('student.quizzes'))
 
     return render_template('student/take_quiz.html', quiz=quiz, user=student)
+
 
 
 
@@ -409,6 +459,8 @@ def edit_profile():
 
 
 
+
+from datetime import datetime, date  
 
 @student_bp.route('/complaints', methods=['GET', 'POST'])
 @student_required
@@ -449,7 +501,7 @@ def complaints():
             'student_id': student_id,
             'subject_id': subject_id,
             'complaint': complaint_text,
-            'date': datetime.datetime.now(),
+            'date': datetime.now(),  
             'status': 'pending',
             'payment_status': 'unpaid',
             'admin_response': '',
@@ -470,8 +522,6 @@ def complaints():
                            pending_complaints=pending_complaints,
                            resolved_complaints=resolved_complaints,
                            unpaid_complaints=unpaid_complaints)
-
-
 
 
 @student_bp.route('/pay_complaint/<complaint_id>', methods=['GET', 'POST'])
@@ -498,7 +548,7 @@ def pay_complaint(complaint_id):
             'complaint_id': ObjectId(complaint_id),
             'student_id': student_id,
             'amount': 50,
-            'payment_date': datetime.datetime.now(),
+            'payment_date': datetime.now(),  
             'method': 'simulated',
             'status': 'completed'
         }
@@ -544,6 +594,7 @@ def view_complaint(complaint_id):
                          subject=subject,
                          user=student)
 
+
 @student_bp.route('/delete_complaint/<complaint_id>', methods=['POST'])
 @student_required
 def delete_complaint(complaint_id):
@@ -568,9 +619,10 @@ def delete_complaint(complaint_id):
     return redirect(url_for('student.complaints'))
 
 
-###########################################################
 
 
+
+from datetime import datetime, date  
 
 @student_bp.route('/pay_fees', methods=['GET', 'POST'])
 @student_required
@@ -599,15 +651,14 @@ def pay_fees():
             return redirect(url_for('student.pay_fees'))
 
         payment_data = {
-       'student_id': ObjectId(student_id),
-       'amount': amount,
-       'stage': stage,
-      'payment_date': datetime.utcnow(),  # ✅
-      'method': 'admin',
-      'status': 'completed',
-      'transaction_id': f"ADM{datetime.now().strftime('%Y%m%d%H%M%S')}",  # ✅
-      'admin_id': ObjectId(session['user']['id'])
-}
+            'student_id': ObjectId(student_id),
+            'amount': amount,
+            'stage': stage,
+            'method': 'admin',
+            'status': 'completed',
+            'admin_id': ObjectId(session['user']['id'])
+        }
+
         db.payments.insert_one(payment_data)
 
         db.users.update_one(
@@ -633,8 +684,9 @@ def pay_fees():
                            user=student,
                            paid_stage=paid_stage,
                            payment_status=payment_status,
-                           current_year_month=datetime.datetime.now().strftime('%Y-%m'),
+                           current_year_month=datetime.now().strftime('%Y-%m'),  
                            payment=last_payment)
+
 
 from bson import ObjectId
 import os
@@ -687,18 +739,15 @@ def select_major():
         flash('User not found', 'danger')
         return redirect(url_for('auth.login'))
 
-    # Only stage 3 students allowed
     if student.get('stage') != 3:
         flash('Major selection allowed only for stage 3 students', 'danger')
         return redirect(url_for('student.dashboard'))
 
-    # Global registration closed flag (optional)
     global_registration_closed = current_app.config.get('MAJOR_REGISTRATION_CLOSED', False)
     if global_registration_closed:
         flash('Major registration is currently closed by administration', 'danger')
         return redirect(url_for('student.dashboard'))
 
-    # Get majors with open registration
     open_majors = list(majors_collection.find({'registration_open': True}))
 
     if request.method == 'POST':
@@ -707,13 +756,11 @@ def select_major():
             flash('You must select exactly one major', 'danger')
             return redirect(url_for('student.select_major'))
 
-        # Verify selected major is open
         major = majors_collection.find_one({'_id': ObjectId(selected_major_id), 'registration_open': True})
         if not major:
             flash('Selected major is not available for registration', 'danger')
             return redirect(url_for('student.select_major'))
 
-        # Save selected major to user record
         users_collection.update_one(
             {'_id': student_id},
             {'$set': {'major_id': ObjectId(selected_major_id)}}
@@ -726,5 +773,242 @@ def select_major():
 @student_bp.route('/logout')
 def logout():
     session.pop('user', None)
-    flash('Logged out successfully.', 'success')
     return redirect(url_for('auth.login'))
+
+
+lectures_collection = db.lectures
+attendance_collection = db.attendance
+
+@student_bp.route('/lectures')
+@student_required
+def student_lectures():
+    student_id = ObjectId(session['user']['id'])
+    student = users_collection.find_one({'_id': student_id})
+    
+    subjects = list(subjects_collection.find({
+        '_id': {'$in': student.get('subjects', [])}
+    }))
+    
+    active_lectures = []
+    for subject in subjects:
+        
+        is_banned = student.get('banned_subjects', {}).get(str(subject['_id']), False)
+        if is_banned:
+            continue  
+
+        lectures = list(lectures_collection.find({
+            'subject_id': subject['_id'],
+            'is_active': True,
+            'is_deleted': {'$ne': True}
+        }))
+
+        for lecture in lectures:
+            attended = attendance_collection.find_one({
+                'lecture_id': lecture['_id'],
+                'student_id': student_id
+            })
+
+            lecture_data = {
+                '_id': str(lecture['_id']),
+                'subject_name': subject.get('name', 'غير معروف'),
+                'code': lecture.get('code', ''),
+                'is_attended': attended is not None,
+                'attended_at': attended.get('attended_at') if attended else None
+            }
+            active_lectures.append(lecture_data)
+    
+    return render_template('student/lectures.html', 
+                           active_lectures=active_lectures,
+                           student=student)  
+
+
+@student_bp.route('/attend_lecture', methods=['POST'])
+@student_required
+def attend_lecture():
+    student_id = ObjectId(session['user']['id'])
+    user = users_collection.find_one({'_id': student_id})  
+
+    code = request.form.get('code')  
+
+    if not code or len(code) != 6:
+        flash('كود الحضور غير صحيح', 'danger')
+        return redirect(url_for('student.lectures'))
+
+    lecture = lectures_collection.find_one({
+        'code': code,
+        'is_active': True,
+        'is_deleted': {'$ne': True}
+    })
+
+    if not lecture:
+        flash('كود الحضور غير صحيح أو المحاضرة غير نشطة', 'danger')
+        return redirect(url_for('student.lectures'))
+
+    student = users_collection.find_one({
+        '_id': student_id,
+        'subjects': {'$in': [lecture['subject_id']]}  
+    })
+
+    if not student:
+        flash('أنت غير مسجل في هذه المادة', 'danger')
+        return redirect(url_for('student.lectures'))
+
+    
+    if student.get('banned_subjects', {}).get(str(lecture['subject_id']), False):
+        flash('أنت محروم من هذه المادة ولا يمكنك تسجيل الحضور', 'danger')
+        return redirect(url_for('student.lectures'))
+
+    existing_attendance = attendance_collection.find_one({
+        'lecture_id': lecture['_id'],
+        'student_id': student_id
+    })
+
+    if existing_attendance:
+        flash('لقد سجلت حضورك بالفعل في هذه المحاضرة', 'warning')
+        return redirect(url_for('student.lectures'))
+
+    attendance_collection.insert_one({
+        'lecture_id': lecture['_id'],
+        'student_id': student_id,
+        'attended_at': datetime.utcnow()
+    })
+
+    flash('تم تسجيل حضورك بنجاح', 'success')
+    return redirect(url_for('student.lectures'))
+
+
+
+
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session
+from bson.objectid import ObjectId
+from datetime import datetime
+
+
+from flask import Blueprint, render_template, request, flash, session
+from bson.objectid import ObjectId
+from datetime import datetime
+
+@student_bp.route('/attendance', methods=['GET', 'POST'])
+@student_required
+def attendance():
+    student_id = ObjectId(session['user']['id'])
+    student = users_collection.find_one({'_id': student_id})
+
+    subject_ids = student.get('subjects', [])
+    subjects = list(subjects_collection.find({'_id': {'$in': subject_ids}}))
+
+    all_lectures = list(lectures_collection.find({
+        'subject_id': {'$in': subject_ids},
+        'is_deleted': {'$ne': True}
+    }))
+
+    attendance_records = list(attendance_collection.find({
+        'student_id': student_id
+    }))
+    attended_map = {str(a['lecture_id']): a for a in attendance_records}
+
+    doctor_ids = {lecture['doctor_id'] for lecture in all_lectures if 'doctor_id' in lecture}
+    doctors = {str(doc['_id']): doc.get('name', 'طبيب غير معروف') 
+              for doc in users_collection.find({'_id': {'$in': list(doctor_ids)}})}
+
+    summary = []
+    for subject in subjects:
+        subject_lectures = [lec for lec in all_lectures if lec['subject_id'] == subject['_id']]
+        attended_count = sum(1 for l in subject_lectures if str(l['_id']) in attended_map)
+        absent_count = len(subject_lectures) - attended_count
+        remaining = max(0, 3 - absent_count)
+
+        
+        is_banned = student.get('banned_subjects', {}).get(str(subject['_id']), False)
+
+        lectures_list = []
+        if not is_banned:
+            for lec in sorted(subject_lectures, key=lambda l: l.get('created_at', l.get('_id')), reverse=True):
+                lec_id_str = str(lec['_id'])
+                attended = attended_map.get(lec_id_str)
+
+                attended_at_val = None
+                if attended and attended.get('attended_at'):
+                    if isinstance(attended['attended_at'], str):
+                        try:
+                            attended_at_val = datetime.fromisoformat(attended['attended_at'])
+                        except ValueError:
+                            attended_at_val = None
+                    else:
+                        attended_at_val = attended['attended_at']
+
+                created_at_val = None
+                if lec.get('created_at'):
+                    if isinstance(lec['created_at'], str):
+                        try:
+                            created_at_val = datetime.fromisoformat(lec['created_at'])
+                        except ValueError:
+                            created_at_val = None
+                    else:
+                        created_at_val = lec['created_at']
+
+                lectures_list.append({
+                    'lecture_id': lec_id_str,
+                    'code': lec.get('code', ''),
+                    'is_active': lec.get('is_active', False),
+                    'attended': attended is not None,
+                    'attended_at': attended_at_val,
+                    'created_at': created_at_val,
+                    'doctor_name': doctors.get(str(lec.get('doctor_id')), 'طبيب غير معروف')
+                })
+        else:
+            
+            lectures_list = []
+
+        subject_data = {
+            'subject_id': str(subject['_id']),
+            'subject_name': subject.get('name', 'غير معروف'),
+            'is_banned': is_banned,
+            'lectures': lectures_list,
+            'attended_count': attended_count,
+            'total_lectures': len(subject_lectures),
+            'absent_count': absent_count,
+            'remaining': remaining
+        }
+
+        summary.append(subject_data)
+
+    message = None
+    message_type = None
+
+    if request.method == 'POST':
+        code = request.form.get('code', '').strip()
+        if not code or len(code) != 6:
+            message = 'كود الحضور غير صالح'
+            message_type = 'error'
+        else:
+            lecture = lectures_collection.find_one({'code': code, 'is_active': True, 'is_deleted': {'$ne': True}})
+            if not lecture:
+                message = 'لم يتم العثور على محاضرة نشطة بهذا الكود'
+                message_type = 'error'
+            elif lecture['subject_id'] not in subject_ids:
+                message = 'أنت غير مسجل في هذه المادة'
+                message_type = 'error'
+            elif student.get('banned_subjects', {}).get(str(lecture['subject_id'])):
+                message = 'أنت محروم من هذه المادة'
+                message_type = 'error'
+            else:
+                already = attendance_collection.find_one({'lecture_id': lecture['_id'], 'student_id': student_id})
+                if already:
+                    message = 'حضرت بالفعل هذه المحاضرة'
+                    message_type = 'warning'
+                else:
+                    attendance_collection.insert_one({
+                        'lecture_id': lecture['_id'],
+                        'student_id': student_id,
+                        'attended_at': datetime.utcnow()
+                    })
+                    message = 'تم تسجيل الحضور بنجاح'
+                    message_type = 'success'
+
+    return render_template('student/attendance.html', 
+                           attendance_summary=summary, 
+                           user=student,
+                           message=message,
+                           message_type=message_type)
+

@@ -1,0 +1,662 @@
+{% extends "student/base.html" %}
+
+{% block content %}
+<div class="attendance-container">
+    {% if message %}
+    <div class="alert alert-{{ message_type }} alert-dismissible fade show">
+        {{ message }}
+        <button type="button" class="btn-close" onclick="this.parentElement.remove()">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+    {% endif %}
+
+    <section class="lecture-section">
+        <div class="section-header">
+            <h2 class="section-title">
+                <i class="fas fa-chalkboard-teacher"></i> Active Lectures
+            </h2>
+            <p class="section-subtitle">Register your attendance for ongoing lectures</p>
+        </div>
+
+        {% if attendance_summary %}
+        <div class="lecture-grid">
+            {% for subject in attendance_summary %}
+            {% set active_lectures = subject.lectures | selectattr("is_active", "equalto", True) | list %}
+            {% if active_lectures %}
+            <div class="subject-card {% if subject.is_banned %}banned{% endif %}">
+                <div class="subject-header">
+                    <h3>{{ subject.subject_name }}</h3>
+                    {% if subject.banned_subjects %}
+                    <span class="badge danger">
+                        <i class="fas fa-ban"></i> Banned
+                    </span>
+                    {% endif %}
+                </div>
+
+                <div class="lecture-list">
+                    {% for lec in active_lectures %}
+                    <div class="lecture-item">
+                        <div class="lecture-info">
+                            <div class="lecture-meta">
+                                <span class="meta-item">
+                                    <i class="fas fa-user-md"></i> {{ lec.doctor_name }}
+                                </span>
+                                <span class="meta-item">
+                                    <i class="fas fa-clock"></i> {{ lec.created_at.strftime('%b %d, %I:%M %p') }}
+                                </span>
+                            </div>
+
+                            {% if lec.attended %}
+                            <div class="attendance-status success">
+                                <i class="fas fa-check-circle"></i> Attended at {{ lec.attended_at.strftime('%b %d,
+                                %I:%M %p') }}
+                            </div>
+                            {% else %}
+                            <form method="POST" action="{{ url_for('student.attendance') }}" class="attendance-form">
+                                <div class="input-group">
+                                    <input type="text" name="code" placeholder="Enter 6-digit code" maxlength="6"
+                                        required pattern="[A-Za-z0-9]{6}" title="6 character attendance code">
+                                    <button type="submit" class="btn primary">
+                                        <i class="fas fa-paper-plane"></i> Submit
+                                    </button>
+                                </div>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-chalkboard"></i>
+            <h4>No Active Lectures</h4>
+            <p>There are currently no lectures requiring attendance</p>
+        </div>
+        {% endif %}
+    </section>
+
+    <section class="history-section">
+        <div class="section-header">
+            <h2 class="section-title">
+                <i class="fas fa-history"></i> Attendance History
+            </h2>
+            <p class="section-subtitle">Your complete attendance record</p>
+        </div>
+
+        {% for subject in attendance_summary %}
+        <div class="history-card {% if subject.absent_count > 3 %}warning{% endif %}">
+            <div class="card-header">
+                <div class="subject-header">
+                    <h3>{{ subject.subject_name }}</h3>
+                    {% if subject.is_banned %}
+                    <span class="badge danger">
+                        <i class="fas fa-ban"></i> Banned
+                    </span>
+                    {% endif %}
+                </div>
+                <div class="stats-badge">
+                    <span class="stat attended">{{ subject.attended_count }} <small>Attended</small></span>
+                    <span class="stat absent">{{ subject.absent_count }} <small>Absent</small></span>
+                    <span class="stat total">{{ subject.total_lectures }} <small>Total</small></span>
+                </div>
+            </div>
+
+            <div class="card-body">
+                <div class="progress-container">
+                    <div class="progress-bar"
+                        style="width: {{ (subject.attended_count / subject.total_lectures * 100) if subject.total_lectures > 0 else 0 }}%">
+                        <span class="progress-text">{{ ((subject.attended_count / subject.total_lectures * 100) if
+                            subject.total_lectures > 0 else 0)|round(1) }}%</span>
+                    </div>
+                </div>
+
+                <div class="remaining-alert {% if subject.remaining <= 3 %}danger{% endif %}">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    {{ subject.remaining }} more absences before ban
+                </div>
+
+                <div class="history-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Lecture Code</th>
+                                <th>Date</th>
+                                <th>Status</th>
+                                <th>Attendance Time</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for lec in subject.lectures %}
+                            <tr>
+                                <td>{{ lec.code }}</td>
+                                <td>{{ lec.created_at.strftime('%b %d, %Y') }}</td>
+                                <td>
+                                    {% if lec.attended %}
+                                    <span class="badge success"><i class="fas fa-check"></i> Attended</span>
+                                    {% else %}
+                                    <span class="badge danger"><i class="fas fa-times"></i> Absent</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if lec.attended %}
+                                    {{ lec.attended_at.strftime('%I:%M %p') }}
+                                    {% else %}
+                                    <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </section>
+</div>
+
+<style>
+    :root {
+        --primary: #4361ee;
+        --primary-light: #4895ef;
+        --secondary: #3f37c9;
+        --success: #4cc9f0;
+        --danger: #f72585;
+        --warning: #f8961e;
+        --dark: #212529;
+        --light: #f8f9fa;
+        --gray: #6c757d;
+        --border-radius: 12px;
+        --box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    }
+
+    .attendance-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    .alert {
+        padding: 1rem 1.5rem;
+        border-radius: var(--border-radius);
+        margin-bottom: 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-weight: 500;
+    }
+
+    .alert-success {
+        background-color: rgba(76, 201, 240, 0.2);
+        color: var(--success);
+        border-left: 4px solid var(--success);
+    }
+
+    .alert-error {
+        background-color: rgba(247, 37, 133, 0.2);
+        color: var(--danger);
+        border-left: 4px solid var(--danger);
+    }
+
+    .alert-warning {
+        background-color: rgba(248, 150, 30, 0.2);
+        color: var(--warning);
+        border-left: 4px solid var(--warning);
+    }
+
+    .btn-close {
+        background: none;
+        border: none;
+        color: inherit;
+        cursor: pointer;
+        font-size: 1.2rem;
+        opacity: 0.7;
+        transition: var(--transition);
+    }
+
+    .btn-close:hover {
+        opacity: 1;
+    }
+
+    .section-header {
+        margin-bottom: 2rem;
+    }
+
+    .section-title {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: var(--dark);
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin: 0;
+    }
+
+    .section-title i {
+        color: var(--primary);
+    }
+
+    .section-subtitle {
+        color: var(--gray);
+        margin: 0.5rem 0 0;
+        font-size: 1.1rem;
+    }
+
+    .lecture-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 3rem;
+    }
+
+    .subject-card {
+        background: white;
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow);
+        overflow: hidden;
+        transition: var(--transition);
+    }
+
+    .subject-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .subject-card.banned {
+        border-left: 4px solid var(--danger);
+    }
+
+    .subject-header {
+        padding: 1.5rem;
+        background: var(--light);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .subject-header h3 {
+        margin: 0;
+        font-size: 1.3rem;
+    }
+
+    .badge {
+        padding: 0.5rem 1rem;
+        border-radius: 50px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .badge.success {
+        background: rgba(76, 201, 240, 0.1);
+        color: var(--success);
+    }
+
+    .badge.danger {
+        background: rgba(247, 37, 133, 0.1);
+        color: var(--danger);
+    }
+
+    .badge.warning {
+        background: rgba(248, 150, 30, 0.1);
+        color: var(--warning);
+    }
+
+    .lecture-list {
+        padding: 1.5rem;
+    }
+
+    .lecture-item {
+        margin-bottom: 1.5rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .lecture-item:last-child {
+        margin-bottom: 0;
+        padding-bottom: 0;
+        border-bottom: none;
+    }
+
+    .lecture-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .meta-item {
+        font-size: 0.95rem;
+        color: var(--gray);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .meta-item i {
+        width: 16px;
+        text-align: center;
+    }
+
+    .attendance-status {
+        padding: 0.75rem 1rem;
+        border-radius: var(--border-radius);
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .attendance-status.success {
+        background: rgba(76, 201, 240, 0.1);
+        color: var(--success);
+    }
+
+    .attendance-form {
+        margin-top: 1rem;
+    }
+
+    .input-group {
+        display: flex;
+        border-radius: var(--border-radius);
+        overflow: hidden;
+        box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
+    }
+
+    .input-group input {
+        flex: 1;
+        padding: 0.75rem 1rem;
+        border: none;
+        font-size: 1rem;
+        outline: none;
+    }
+
+    .input-group input:focus {
+        box-shadow: 0 0 0 2px var(--primary);
+    }
+
+    .btn {
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 0 var(--border-radius) var(--border-radius) 0;
+        font-weight: 500;
+        cursor: pointer;
+        transition: var(--transition);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn.primary {
+        background: var(--primary);
+        color: white;
+    }
+
+    .btn.primary:hover {
+        background: var(--secondary);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem 2rem;
+        background: white;
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow);
+    }
+
+    .empty-state i {
+        font-size: 3rem;
+        color: #e0e0e0;
+        margin-bottom: 1.5rem;
+    }
+
+    .empty-state h4 {
+        font-size: 1.5rem;
+        margin: 0.5rem 0;
+        color: var(--dark);
+    }
+
+    .empty-state p {
+        margin: 0;
+        color: var(--gray);
+    }
+
+    .history-card {
+        background: white;
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow);
+        margin-bottom: 2rem;
+        overflow: hidden;
+    }
+
+    .history-card.warning {
+        border-left: 4px solid var(--warning);
+    }
+
+    .card-header {
+        padding: 1.5rem;
+        background: var(--light);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .card-header h3 {
+        margin: 0;
+        font-size: 1.3rem;
+    }
+
+    .stats-badge {
+        display: flex;
+        gap: 1rem;
+    }
+
+    .stat {
+        padding: 0.5rem 1rem;
+        border-radius: var(--border-radius);
+        font-weight: 600;
+        text-align: center;
+    }
+
+    .stat.attended {
+        background: rgba(76, 201, 240, 0.1);
+        color: var(--success);
+    }
+
+    .stat.absent {
+        background: rgba(247, 37, 133, 0.1);
+        color: var(--danger);
+    }
+
+    .stat.total {
+        background: rgba(108, 117, 125, 0.1);
+        color: var(--gray);
+    }
+
+    .stat small {
+        display: block;
+        font-size: 0.7rem;
+        font-weight: 400;
+        opacity: 0.8;
+    }
+
+    .card-body {
+        padding: 1.5rem;
+    }
+
+    .progress-container {
+        height: 30px;
+        background: #f1f1f1;
+        border-radius: 15px;
+        margin-bottom: 1.5rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .progress-bar {
+        height: 100%;
+        background: linear-gradient(90deg, var(--primary), var(--success));
+        border-radius: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        padding-right: 1rem;
+        transition: width 1s ease;
+    }
+
+    .progress-text {
+        color: white;
+        font-size: 0.9rem;
+        font-weight: 600;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    }
+
+    .remaining-alert {
+        padding: 1rem;
+        border-radius: var(--border-radius);
+        margin-bottom: 1.5rem;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .remaining-alert.danger {
+        background: rgba(247, 37, 133, 0.1);
+        color: var(--danger);
+    }
+
+    .remaining-alert i {
+        font-size: 1.2rem;
+    }
+
+    .history-table {
+        overflow-x: auto;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    th,
+    td {
+        padding: 1rem;
+        text-align: left;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    th {
+        font-weight: 600;
+        color: var(--gray);
+        background: var(--light);
+    }
+
+    tr:hover {
+        background: rgba(67, 97, 238, 0.03);
+    }
+
+    .text-muted {
+        color: var(--gray);
+        font-style: italic;
+    }
+
+    @media (max-width: 992px) {
+        .attendance-container {
+            padding: 1.5rem;
+        }
+
+        .lecture-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .section-title {
+            font-size: 1.5rem;
+        }
+
+        .card-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+
+        .stats-badge {
+            width: 100%;
+            justify-content: space-between;
+        }
+
+        th,
+        td {
+            padding: 0.75rem;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .attendance-container {
+            padding: 1rem;
+        }
+
+        .meta-item {
+            width: 100%;
+        }
+
+        .input-group {
+            flex-direction: column;
+        }
+
+        .input-group input {
+            border-radius: var(--border-radius) var(--border-radius) 0 0;
+        }
+
+        .btn {
+            border-radius: 0 0 var(--border-radius) var(--border-radius);
+            width: 100%;
+            justify-content: center;
+        }
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('animate__animated', 'animate__fadeInUp');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.1 });
+
+        document.querySelectorAll('.subject-card, .history-card').forEach(card => {
+            observer.observe(card);
+        });
+    });
+
+    document.querySelectorAll('.attendance-form').forEach(form => {
+        const input = form.querySelector('input[name="code"]');
+        const button = form.querySelector('button[type="submit"]');
+
+        if (input && button) {
+            button.addEventListener('click', function (e) {
+                if (!input.value.trim()) {
+                    e.preventDefault();
+                    input.focus();
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

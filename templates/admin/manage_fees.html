@@ -36,6 +36,20 @@
                         </div>
                     </div>
 
+                    <form method="POST" class="fee-toggle-form" style="margin-top: 2rem;">
+    <h2>Payment Requirement</h2>
+    <p style="margin-bottom: 1rem;">Current status: 
+        <strong style="color: {{ 'green' if fees.get('is_payment_required') else 'red' }}">
+            {{ 'Enabled' if fees.get('is_payment_required') else 'Disabled' }}
+        </strong>
+    </p>
+    <input type="hidden" name="toggle_payment_required" value="1">
+    <button type="submit" class="btn {{ 'btn-danger' if fees.get('is_payment_required') else 'btn-success' }}">
+        {{ 'Disable Payment Requirement' if fees.get('is_payment_required') else 'Enable Payment Requirement' }}
+    </button>
+</form>
+
+
                     <button type="submit" class="btn btn-primary">Save Fees</button>
                 </form>
             </div>
@@ -54,6 +68,56 @@
 </div>
 
 <style>
+
+    .fee-toggle-form {
+    background: #f8f9fa;
+    padding: 1.5rem 2rem;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+}
+
+.fee-toggle-form h2 {
+    font-size: 1.3rem;
+    margin-bottom: 0.5rem;
+    color: #333;
+}
+
+.fee-toggle-form p {
+    font-size: 1rem;
+    color: #555;
+    margin-bottom: 1rem;
+}
+
+.fee-toggle-form strong {
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.btn-success {
+    background-color: #28a745;
+    color: white;
+    border: none;
+}
+
+.btn-success:hover {
+    background-color: #218838;
+    transform: translateY(-1px);
+}
+
+.btn-danger {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+}
+
+.btn-danger:hover {
+    background-color: #c82333;
+    transform: translateY(-1px);
+}
+
+
     .admin-content {
         padding: 2rem;
         max-width: 1200px;

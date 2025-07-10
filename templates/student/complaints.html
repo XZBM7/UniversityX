@@ -487,7 +487,10 @@
                             <span class="complaint-id">#{{ complaint._id }}</span>
                             <span class="complaint-date">{{ complaint.date.strftime('%Y-%m-%d') }}</span>
                         </div>
-                        <h3 class="complaint-subject">{{ subject.name }}</h3>
+                        {% set subject = subject_map.get(complaint.subject_id|string, None) %}
+                        <h3 class="complaint-subject">
+                            {{ subject.name if subject else "Subject Not Found" }}
+                        </h3>
                         <p class="complaint-excerpt">{{ complaint.complaint[:100] }}...</p>
                     </div>
                     <div class="complaint-status">

@@ -485,6 +485,23 @@
       line-height: 1.6;
       opacity: 0.9;
     }
+
+    .university-name {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.2;
+    }
+
+    .university-main-name {
+      font-weight: 900;
+      color: var(--primary);
+    }
+
+    .university-sub-name {
+      font-size: 0.7rem;
+      color: var(--secondary);
+      font-weight: 600;
+    }
   </style>
   {% block extra_css %}{% endblock %}
 </head>
@@ -494,88 +511,87 @@
     <a href="{{ url_for('student.dashboard') }}" class="navbar-brand">
       <i class="fas fa-graduation-cap"></i>
       <span>Student Portal</span>
-    </a>
 
-    <div class="nav-links">
-      <a href="{{ url_for('auth.home') }}" class="nav-link">
-        <i class="fas fa-home"></i> Dashboard
-      </a>
+      <div class="nav-links">
+        <a href="{{ url_for('auth.home') }}" class="nav-link">
+          <i class="fas fa-home"></i> Dashboard
+        </a>
 
-      <a href="{{ url_for('student.select_subjects') }}" class="nav-link">
-        <i class="fas fa-book"></i> Subjects
-      </a>
-      <a href="{{ url_for('student.view_schedule') }}" class="nav-link">
-        <i class="fas fa-calendar-alt"></i> Schedule
-      </a>
-      <a href="{{ url_for('student.quizzes') }}" class="nav-link">
-        <i class="fas fa-question-circle"></i> Quizzes
-      </a>
+        <a href="{{ url_for('student.select_subjects') }}" class="nav-link">
+          <i class="fas fa-book"></i> Subjects
+        </a>
+        <a href="{{ url_for('student.view_schedule') }}" class="nav-link">
+          <i class="fas fa-calendar-alt"></i> Schedule
+        </a>
+        <a href="{{ url_for('student.quizzes') }}" class="nav-link">
+          <i class="fas fa-question-circle"></i> Quizzes
+        </a>
 
-      <a href="{{ url_for('student.grades') }}" class="nav-link">
-        <i class="fas fa-chart-line"></i> Grades
-      </a>
+        <a href="{{ url_for('student.grades') }}" class="nav-link">
+          <i class="fas fa-chart-line"></i> Grades
+        </a>
 
-      <a href="{{ url_for('student.pay_fees') }}" class="nav-link">
-        <i class="fas fa-chart-line"></i> Pay Fees
-      </a>
-
+        <a href="{{ url_for('student.pay_fees') }}" class="nav-link">
+          <i class="fas fa-chart-line"></i> Pay Fees
+        </a>
 
 
-      <a href="{{ url_for('student.exam_rooms') }}" class="nav-link">
-        <i class="fas fa-university"></i> Exams
-      </a>
 
-      <div class="user-profile">
-        <div class="user-info">
-          {% if user.profile_image %}
-          <img src="{{ url_for('static', filename='uploads/' + user.profile_image) }}" class="avatar profile-image">
-          {% else %}
-          <div class="avatar">{{ user.name|first|upper }}</div>
-          {% endif %}
-          <span>{{ user.name }}</span>
-        </div>
+        <a href="{{ url_for('student.exam_rooms') }}" class="nav-link">
+          <i class="fas fa-university"></i> Exams
+        </a>
 
-        <div class="profile-dropdown">
-          <div class="profile-header">
+        <div class="user-profile">
+          <div class="user-info">
             {% if user.profile_image %}
             <img src="{{ url_for('static', filename='uploads/' + user.profile_image) }}" class="avatar profile-image">
             {% else %}
             <div class="avatar">{{ user.name|first|upper }}</div>
             {% endif %}
-            <div class="user-details">
-              <div class="user-name">{{ user.name }}</div>
-              <div class="user-role">Student</div>
-            </div>
+            <span>{{ user.name }}</span>
           </div>
 
-          <ul class="profile-menu">
-            <li>
-              <a href="{{ url_for('student.edit_profile') }}">
-                <i class="fas fa-user-circle"></i> My Profile
-              </a>
-            </li>
-            <li>
-              <a href="{{('student.settings') }}">
-                <i class="fas fa-cog"></i> Settings
-              </a>
-            </li>
-            <li>
-              <a href="{{('student.notifications') }}">
-                <i class="fas fa-bell"></i> Notifications
-                <span class="badge"
-                  style="margin-left: auto; background: var(--danger); color: white; border-radius: 10px; padding: 0.1rem 0.5rem; font-size: 0.7rem;">3</span>
-              </a>
-            </li>
-          </ul>
+          <div class="profile-dropdown">
+            <div class="profile-header">
+              {% if user.profile_image %}
+              <img src="{{ url_for('static', filename='uploads/' + user.profile_image) }}" class="avatar profile-image">
+              {% else %}
+              <div class="avatar">{{ user.name|first|upper }}</div>
+              {% endif %}
+              <div class="user-details">
+                <div class="user-name">{{ user.name }}</div>
+                <div class="user-role">Student</div>
+              </div>
+            </div>
 
-          <div class="profile-footer">
-            <button class="logout-btn" onclick="window.location.href='{{ url_for('student.logout') }}'">
-              <i class="fas fa-sign-out-alt"></i> Logout
-            </button>
+            <ul class="profile-menu">
+              <li>
+                <a href="{{ url_for('student.edit_profile') }}">
+                  <i class="fas fa-user-circle"></i> My Profile
+                </a>
+              </li>
+              <li>
+                <a href="{{('student.settings') }}">
+                  <i class="fas fa-cog"></i> Settings
+                </a>
+              </li>
+              <li>
+                <a href="{{('student.notifications') }}">
+                  <i class="fas fa-bell"></i> Notifications
+                  <span class="badge"
+                    style="margin-left: auto; background: var(--danger); color: white; border-radius: 10px; padding: 0.1rem 0.5rem; font-size: 0.7rem;">3</span>
+                </a>
+              </li>
+            </ul>
+
+            <div class="profile-footer">
+              <button class="logout-btn" onclick="window.location.href='{{ url_for('student.logout') }}'">
+                <i class="fas fa-sign-out-alt"></i> Logout
+              </button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
   </nav>
 
   <div class="flash-messages">

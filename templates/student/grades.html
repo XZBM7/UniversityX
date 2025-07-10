@@ -66,6 +66,29 @@
       </tbody>
     </table>
 
+    <div class="student-progress">
+  <div class="progress-info">
+    <div class="progress-item">
+      <i class="fas fa-layer-group"></i>
+      <span>Current Stage: <strong>{{ stage }}</strong></span>
+    </div>
+    <div class="progress-item">
+      <i class="fas fa-clock"></i>
+      <span>Completed Hours: <strong>{{ completed_hours }}/144</strong></span>
+    </div>
+    <div class="progress-item {% if graduation_status == 'Graduated Successfully' %}graduated{% endif %}">
+      <i class="fas fa-graduation-cap"></i>
+      <span>Status: <strong>{{ graduation_status }}</strong></span>
+    </div>
+  </div>
+
+  <div class="progress-bar-container">
+    <div class="progress-bar" style="width: {{ (completed_hours/144)*100 }}%">
+      <span class="progress-text">{{ completed_hours }} hours</span>
+    </div>
+  </div>
+</div>
+
     <a href="{{ url_for('student.dashboard') }}" class="btn">
       <i class="fas fa-arrow-left"></i> Back to Dashboard
     </a>
@@ -335,6 +358,58 @@
       transform: scale(1);
     }
   }
+  .student-progress {
+    margin: 20px 0;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+
+  .progress-info {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 15px;
+  }
+
+  .progress-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 16px;
+  }
+
+  .progress-item.graduated {
+    color: #28a745;
+    font-weight: bold;
+  }
+
+  .progress-bar-container {
+    height: 25px;
+    background: #e9ecef;
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #4361ee, #4cc9f0);
+    border-radius: 12px;
+    transition: width 0.5s ease;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 10px;
+  }
+
+  .progress-text {
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+    text-shadow: 0 0 2px rgba(0,0,0,0.5);
+  }
+
 </style>
 
 <script>

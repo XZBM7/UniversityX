@@ -1,0 +1,15 @@
+{% extends "student/base.html" %}
+{% block title %}حالة المادة{% endblock %}
+
+{% block content %}
+<h2>حالة مادة</h2>
+
+<p>عدد المحاضرات الكلي: {{ total }}</p>
+<p>عدد الغيابات: {{ absences }}</p>
+
+{% if banned %}
+    <p style="color: red; font-weight: bold;">محظور من المادة بسبب الغيابات المتكررة ولا يمكنك دخول الامتحانات.</p>
+{% else %}
+    <p style="color: green;">حالتك جيدة، يمكنك متابعة المادة.</p>
+{% endif %}
+{% endblock %}

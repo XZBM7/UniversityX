@@ -241,22 +241,39 @@
       </div>
     </div>
 
+
+    <div class="dashboard-card">
+      <div class="card-header">
+        <i class="fas fa-user-check"></i>
+        <h2>Attendance</h2>
+      </div>
+      <div class="card-content">
+        <p>View your attendance records and track absences.</p>
+      </div>
+      <div class="card-actions">
+        <a href="{{ url_for('student.attendance') }}" class="btn btn-outline">
+          <i class="fas fa-door-open"></i> View Attendance
+        </a>
+      </div>
+    </div>
+
+
     {% if user.stage == 3 %}
-<div class="dashboard-card">
-  <div class="card-header">
-    <i class="fas fa-graduation-cap"></i>
-    <h2>Select Major</h2>
-  </div>
-  <div class="card-content">
-    <p>Choose your specialization for the upcoming semester.</p>
-  </div>
-  <div class="card-actions">
-    <a href="{{ url_for('student.select_major') }}" class="btn btn-outline">
-      <i class="fas fa-edit"></i> Select Major
-    </a>
-  </div>
-</div>
-{% endif %}
+    <div class="dashboard-card">
+      <div class="card-header">
+        <i class="fas fa-graduation-cap"></i>
+        <h2>Select Major</h2>
+      </div>
+      <div class="card-content">
+        <p>Choose your specialization for the upcoming semester.</p>
+      </div>
+      <div class="card-actions">
+        <a href="{{ url_for('student.select_major') }}" class="btn btn-outline">
+          <i class="fas fa-edit"></i> Select Major
+        </a>
+      </div>
+    </div>
+    {% endif %}
 
 
     <div class="dashboard-card">
@@ -389,6 +406,7 @@
       </div>
     </div>
 
+
     <div class="dashboard-card">
       <div class="card-header">
         <i class="fas fa-university"></i>
@@ -406,6 +424,8 @@
   </div>
 </div>
 {% endblock %}
+
+
 
 {% block extra_js %}
 <script>

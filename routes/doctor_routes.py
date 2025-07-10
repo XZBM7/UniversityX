@@ -11,6 +11,10 @@ from config import quiz_results_collection
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
 from werkzeug.utils import secure_filename
+from flask import Flask, jsonify
+from datetime import datetime
+
+
 doctor_bp = Blueprint('doctor', __name__)
 
 users_collection = db.users
@@ -30,23 +34,42 @@ def doctor_required(func):
         return func(*args, **kwargs)
     return decorated_function
 
+from datetime import datetime
+from bson.objectid import ObjectId
+
 @doctor_bp.route('/dashboard')
 @doctor_required
 def dashboard():
     doctor_id = ObjectId(session['user']['id'])
     doctor = users_collection.find_one({'_id': doctor_id})
 
-    subjects = list(subjects_collection.find({'_id': {'$in': doctor.get('subjects', [])}}))
+    subject_ids = doctor.get('subjects', [])
+    subjects = list(subjects_collection.find({'_id': {'$in': subject_ids}}))
+
+    
+    for subject in subjects:
+        subject_id = subject['_id']
+        student_count = users_collection.count_documents({
+            'role': 'student',
+            'subjects': {'$in': [subject_id]}
+        })
+        subject['student_count'] = student_count
 
     quizzes = list(quizzes_collection.find({'creator_id': doctor_id}))
 
     for quiz in quizzes:
         if isinstance(quiz.get('start_time'), str):
-            quiz['start_time'] = datetime.datetime.fromisoformat(quiz['start_time'])
+            quiz['start_time'] = datetime.fromisoformat(quiz['start_time'])
         if isinstance(quiz.get('end_time'), str):
-            quiz['end_time'] = datetime.datetime.fromisoformat(quiz['end_time'])
+            quiz['end_time'] = datetime.fromisoformat(quiz['end_time'])
 
-    return render_template('doctor/dashboard.html', subjects=subjects, quizzes=quizzes)
+    current_date = datetime.utcnow()
+
+    return render_template('doctor/dashboard.html', 
+                           subjects=subjects, 
+                           quizzes=quizzes, 
+                           current_date=current_date)
+
 
 
 @doctor_bp.route('/schedule')
@@ -92,6 +115,8 @@ from bson.objectid import ObjectId
 @doctor_required
 def add_quiz(subject_id):
     import pprint
+    from bson.objectid import ObjectId
+    from datetime import datetime
 
     doctor_id = session['user']['id']
     print(f"DEBUG: Doctor ID from session: {doctor_id}")
@@ -101,9 +126,10 @@ def add_quiz(subject_id):
     print("DEBUG: Subject found without doctor filter:")
     pprint.pprint(subject_basic)
 
+    
     subject = subjects_collection.find_one({
         '_id': ObjectId(subject_id),
-        'doctor_id': ObjectId(doctor_id)
+        'doctor_id': ObjectId(doctor_id)  
     })
     print("DEBUG: Subject found with doctor filter:")
     pprint.pprint(subject)
@@ -112,7 +138,6 @@ def add_quiz(subject_id):
         flash('Subject not found or you are not authorized', 'danger')
         return redirect(url_for('doctor.dashboard'))
 
-
     if request.method == 'POST':
         try:
             title = request.form['title']
@@ -120,32 +145,32 @@ def add_quiz(subject_id):
             end_time = request.form['end_time']
             duration = int(request.form['duration'])
 
-            start_dt = datetime.datetime.fromisoformat(start_time)
-            end_dt = datetime.datetime.fromisoformat(end_time)
-            
+            start_dt = datetime.fromisoformat(start_time)
+            end_dt = datetime.fromisoformat(end_time)
+
             if start_dt >= end_dt:
                 flash('End time must be after start time', 'danger')
                 return redirect(url_for('doctor.add_quiz', subject_id=subject_id))
 
             questions = []
             question_count = int(request.form.get('num_questions', 1))
-            
+
             for i in range(1, question_count + 1):
                 q_text = request.form.get(f'question_{i}_text')
                 if not q_text or q_text.strip() == '':
                     continue
-                    
+
                 options = [
                     request.form.get(f'question_{i}_option_1', '').strip(),
                     request.form.get(f'question_{i}_option_2', '').strip(),
                     request.form.get(f'question_{i}_option_3', '').strip(),
                     request.form.get(f'question_{i}_option_4', '').strip()
                 ]
-                
+
                 if any(not opt for opt in options):
                     flash(f'Question {i}: All options must be filled', 'danger')
                     return redirect(url_for('doctor.add_quiz', subject_id=subject_id))
-                
+
                 try:
                     correct_option = int(request.form.get(f'question_{i}_correct'))
                     if correct_option not in [1, 2, 3, 4]:
@@ -173,8 +198,8 @@ def add_quiz(subject_id):
                 'duration': duration,
                 'published': False,
                 'questions': questions,
-                'created_at': datetime.datetime.utcnow(),
-                'creator_id': ObjectId(session['user']['id'])
+                'created_at': datetime.utcnow(),
+                'creator_id': ObjectId(doctor_id)
             }
 
             result = quizzes_collection.insert_one(quiz_data)
@@ -186,6 +211,7 @@ def add_quiz(subject_id):
             return redirect(url_for('doctor.add_quiz', subject_id=subject_id))
 
     return render_template('doctor/add_quiz.html', subject_id=subject_id, subject=subject)
+
 
 
 @doctor_bp.route('/quiz_results/<quiz_id>')
@@ -276,7 +302,10 @@ def delete_quiz(quiz_id):
     return redirect(url_for('doctor.dashboard')) 
 
 
+
+
 from datetime import datetime
+from bson import ObjectId
 
 @doctor_bp.route('/my_quizzes')
 @doctor_required
@@ -289,9 +318,19 @@ def my_quizzes():
         if isinstance(q.get('end_time'), str):
             q['end_time'] = datetime.fromisoformat(q['end_time'])
 
-    return render_template('doctor/my_quizzes.html', quizzes=quizzes, datetime=datetime)
+    now = datetime.now()
+    return render_template('doctor/my_quizzes.html', quizzes=quizzes, now=now)
 
 
+
+
+from flask import request, redirect, url_for, session, render_template, flash
+from bson import ObjectId
+from datetime import datetime  
+from config import db
+
+messages_collection = db.messages
+users_collection = db.users
 
 @doctor_bp.route('/messages')
 @doctor_required
@@ -315,7 +354,6 @@ def messages():
         })
     
     return render_template('doctor/messages.html', messages=enriched_msgs)
-
 
 
 @doctor_bp.route('/reply_message/<message_id>', methods=['GET', 'POST'])
@@ -342,7 +380,7 @@ def reply_message(message_id):
             'sender_name': sender.get('name', 'Unknown'),
             'sender_email': sender.get('email', ''),
             'university_id': sender.get('university_id', ''),
-            'profile_image': sender_image           
+            'profile_image': sender_image
         }
     }
     
@@ -352,7 +390,7 @@ def reply_message(message_id):
             {'_id': ObjectId(message_id)},
             {'$set': {
                 'reply': reply,
-                'reply_timestamp': datetime.datetime.utcnow()
+                'reply_timestamp': datetime.utcnow()  
             }}
         )
         flash('Reply sent successfully', 'success')
@@ -360,12 +398,6 @@ def reply_message(message_id):
     
     return render_template('doctor/reply_message.html', **context)
 
-
-from datetime import datetime 
-
-from flask import request, redirect, url_for
-from bson import ObjectId
-import datetime
 
 @doctor_bp.route('/edit_message/<message_id>', methods=['GET', 'POST'])
 @doctor_required
@@ -381,21 +413,19 @@ def edit_message(message_id):
         if new_reply and new_reply.strip() != '':
             messages_collection.update_one(
                 {'_id': ObjectId(message_id)},
-                {'$set': {'reply': new_reply, 'reply_edited_at': datetime.datetime.utcnow()}}
+                {'$set': {
+                    'reply': new_reply,
+                    'reply_edited_at': datetime.utcnow()  
+                }}
             )
         return redirect(url_for('doctor.messages'))
 
     return render_template('doctor/edit_message.html', message=message)
 
 
-
-
-
 @doctor_bp.route('/delete_message/<message_id>', methods=['POST', 'GET'])
 @doctor_required
 def delete_message(message_id):
-    from bson.objectid import ObjectId
-
     messages_collection.delete_one({'_id': ObjectId(message_id)})
     flash('Message deleted successfully.', 'success')
     return redirect(url_for('doctor.messages'))
@@ -411,7 +441,7 @@ def logout():
 def profile():
     UPLOAD_FOLDER = 'static/uploads/profiles'
     ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
-    MAX_FILE_SIZE = 2 * 1024 * 1024  # 2MB
+    MAX_FILE_SIZE = 2 * 1024 * 1024  
 
     os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
@@ -590,3 +620,376 @@ def my_students_stats():
         subjects_taught=subjects_taught,
         doctor=doctor
     )
+import random
+from datetime import datetime
+
+
+
+lectures_collection = db.lectures
+attendance_collection = db.attendance
+
+
+
+
+
+
+@doctor_bp.route('/lectures')
+@doctor_required
+def lectures():
+    doctor_id = ObjectId(session['user']['id'])
+    doctor = users_collection.find_one({'_id': doctor_id})
+
+    subjects = list(subjects_collection.find({'_id': {'$in': doctor.get('subjects', [])}}))
+    subjects_dict = {subject['_id']: subject['name'] for subject in subjects}
+
+    active_lectures = list(lectures_collection.find({
+        'doctor_id': doctor_id,
+        'is_active': True,
+        'is_deleted': {'$ne': True}  
+    }))
+    for lecture in active_lectures:
+        lecture['subject_name'] = subjects_dict.get(lecture['subject_id'], 'غير معروف')
+
+    past_lectures = list(lectures_collection.find({
+        'doctor_id': doctor_id,
+        'is_active': False,
+        'is_deleted': {'$ne': True}  
+    }).sort('created_at', -1).limit(20))
+    for lecture in past_lectures:
+        lecture['subject_name'] = subjects_dict.get(lecture['subject_id'], 'غير معروف')
+
+    deleted_lectures = list(lectures_collection.find({
+        'doctor_id': doctor_id,
+        'is_deleted': True
+    }).sort('created_at', -1))
+    for lecture in deleted_lectures:
+        lecture['subject_name'] = subjects_dict.get(lecture['subject_id'], 'غير معروف')
+
+    return render_template('doctor/lectures.html',
+                           subjects=subjects,
+                           active_lectures=active_lectures,
+                           past_lectures=past_lectures,
+                           deleted_lectures=deleted_lectures)
+
+
+@doctor_bp.route('/create_lecture', methods=['POST'])
+@doctor_required
+def create_lecture():
+    doctor_id = ObjectId(session['user']['id'])
+    subject_id = request.form.get('subject_id')
+    
+    if not subject_id:
+        flash('يجب اختيار المادة', 'danger')
+        return redirect(url_for('doctor.lectures'))
+    
+    
+    code = ''.join([str(random.randint(0, 9)) for _ in range(6)])
+    
+    lecture_data = {
+        'doctor_id': doctor_id,
+        'subject_id': ObjectId(subject_id),
+        'code': code,
+        'is_active': True,
+        'created_at': datetime.utcnow(),
+        'ended_at': None
+    }
+    
+    
+    lectures_collection.insert_one(lecture_data)
+    
+    flash(f'تم إنشاء المحاضرة بنجاح. كود الحضور: {code}', 'success')
+    return redirect(url_for('doctor.lectures'))
+
+@doctor_bp.route('/end_lecture/<lecture_id>', methods=['POST'])
+@doctor_required
+def end_lecture(lecture_id):
+    doctor_id = ObjectId(session['user']['id'])
+    
+    
+    lecture = lectures_collection.find_one({
+        '_id': ObjectId(lecture_id),
+        'doctor_id': doctor_id
+    })
+    
+    if not lecture:
+        flash('المحاضرة غير موجودة أو غير مسموح لك بإغلاقها', 'danger')
+        return redirect(url_for('doctor.lectures'))
+    
+    
+    lectures_collection.update_one(
+        {'_id': ObjectId(lecture_id)},
+        {'$set': {
+            'is_active': False,
+            'ended_at': datetime.utcnow()
+        }}
+    )
+    
+    flash('تم إنهاء المحاضرة بنجاح', 'success')
+    return redirect(url_for('doctor.lectures'))
+
+
+
+@doctor_bp.route('/toggle_ban/<subject_id>/<student_id>/<lecture_id>', methods=['POST'])
+@doctor_required
+def toggle_ban(subject_id, student_id, lecture_id):
+    doctor_id = ObjectId(session['user']['id'])
+
+    subject = subjects_collection.find_one({
+        '_id': ObjectId(subject_id),
+        'doctor_id': doctor_id
+    })
+
+    if not subject:
+        flash('المادة غير موجودة أو غير مسموح لك بإدارة الحرمان', 'danger')
+        return redirect(url_for('doctor.attendance', lecture_id=lecture_id))
+
+    student = users_collection.find_one({
+        '_id': ObjectId(student_id),
+        'role': 'student',
+        'subjects': {'$in': [ObjectId(subject_id)]}  
+    })
+
+    if not student:
+        flash('الطالب غير موجود أو غير مسجل في المادة', 'danger')
+        return redirect(url_for('doctor.attendance', lecture_id=lecture_id))
+
+    banned_subjects = student.get('banned_subjects', {})
+    is_banned = banned_subjects.get(str(subject_id), False)
+
+    banned_subjects[str(subject_id)] = not is_banned
+
+    users_collection.update_one(
+        {'_id': ObjectId(student_id)},
+        {'$set': {'banned_subjects': banned_subjects}}
+    )
+
+    action = "منع" if not is_banned else "إلغاء منع"
+    flash(f'تم {action} الطالب بنجاح', 'success')
+    return redirect(url_for('doctor.attendance', lecture_id=lecture_id))
+
+
+
+@doctor_bp.route('/remove_attendance/<lecture_id>/<university_id>', methods=['POST'])
+@doctor_required
+def remove_attendance(lecture_id, university_id):
+    try:
+        
+        student = users_collection.find_one({'university_id': university_id, 'role': 'student'})
+        if not student:
+            return jsonify({'success': False, 'message': 'الطالب غير موجود'})
+
+        student_id = student['_id']
+
+        
+        result = attendance_collection.delete_one({
+            'lecture_id': ObjectId(lecture_id),
+            'student_id': student_id
+        })
+
+        if result.deleted_count == 0:
+            return jsonify({'success': False, 'message': 'سجل الحضور غير موجود'})
+
+        
+        lecture = lectures_collection.find_one({'_id': ObjectId(lecture_id)})
+        if not lecture:
+            return jsonify({'success': False, 'message': 'المحاضرة غير موجودة'})
+
+        
+        subject_lectures = list(lectures_collection.find({
+            'subject_id': lecture['subject_id'],
+            'doctor_id': ObjectId(session['user']['id']),
+            'is_active': False
+        }))
+
+        
+        attended_count = attendance_collection.count_documents({
+            'student_id': student_id,
+            'lecture_id': {'$in': [lec['_id'] for lec in subject_lectures]}
+        })
+
+        
+        absent_count = len(subject_lectures) - attended_count
+
+        
+        if absent_count > 3:
+            users_collection.update_one(
+                {'_id': student_id},
+                {'$set': {f'banned_subjects.{str(lecture["subject_id"])}': True}}
+            )
+            return jsonify({
+                'success': True,
+                'message': 'تم إلغاء الحضور وتسجيل غياب الطالب. تم حرمان الطالب لتجاوز عدد الغيابات المسموح بها',
+                'is_banned': True
+            })
+        else:
+            return jsonify({
+                'success': True,
+                'message': 'تم إلغاء حضور الطالب بنجاح',
+                'is_banned': False
+            })
+
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)})
+
+    
+
+
+@doctor_bp.route('/attendance/<lecture_id>', endpoint='attendance')
+@doctor_required
+def lecture_attendance(lecture_id):
+    doctor_id = ObjectId(session['user']['id'])
+    
+    
+    lecture = lectures_collection.find_one({
+        '_id': ObjectId(lecture_id),
+        'doctor_id': doctor_id
+    })
+    
+    if not lecture:
+        flash('Lecture not found or not authorized', 'danger')
+        return redirect(url_for('doctor.lectures'))
+
+    
+    subject = subjects_collection.find_one({'_id': lecture['subject_id']})
+    lecture['subject_name'] = subject['name'] if subject else 'Unknown'
+
+    
+    attendance_records = list(attendance_collection.find({
+        'lecture_id': ObjectId(lecture_id)
+    }))
+
+    
+    attendance_data = []
+    student_ids = [record['student_id'] for record in attendance_records]
+    
+    if student_ids:
+        students = list(users_collection.find({
+            '_id': {'$in': student_ids}
+        }))
+        student_map = {str(student['_id']): student for student in students}
+        
+        for record in attendance_records:
+            student = student_map.get(str(record['student_id']))
+            if student:
+                attendance_data.append({
+                    'student_name': student.get('name', 'Unknown'),
+                    'university_id': student.get('university_id', 'N/A'),
+                    'attended_at': record.get('attended_at'),
+                    'student_id': str(student['_id'])
+                })
+
+    
+    banned_students = []
+    subject_students = list(users_collection.find({
+        'role': 'student',
+        'subjects': lecture['subject_id']
+    }))
+
+    
+    subject_lectures = list(lectures_collection.find({
+        'subject_id': lecture['subject_id'],
+        'doctor_id': doctor_id,
+        'is_active': False  
+    }))
+
+    for student in subject_students:
+        
+        attended_count = attendance_collection.count_documents({
+            'student_id': student['_id'],
+            'lecture_id': {'$in': [lec['_id'] for lec in subject_lectures]}
+        })
+        
+        absent_count = len(subject_lectures) - attended_count
+        
+        if absent_count > 3:
+            banned_students.append({
+                'student_name': student.get('name', 'Unknown'),
+                'university_id': student.get('university_id', 'N/A'),
+                'absent_count': absent_count,
+                'student_id': str(student['_id']),
+                'is_banned': student.get('banned_subjects', {}).get(str(lecture['subject_id']), False)
+            })
+
+    return render_template('doctor/attendance.html',
+                         lecture=lecture,
+                         attendance_records=attendance_data,
+                         banned_students=banned_students)
+
+@doctor_bp.route('/unban_student/<subject_id>/<university_id>', methods=['POST'])
+@doctor_required
+def unban_student(subject_id, university_id):
+    try:
+        
+        student = users_collection.find_one({
+            'university_id': university_id,
+            'role': 'student'
+        })
+
+        if not student:
+            return jsonify({'success': False, 'message': 'Student not found'})
+
+        student_id = student['_id']
+
+        
+        banned_subjects = student.get('banned_subjects', {})
+        if str(banned_subjects.get(subject_id, False)) == "True":
+            banned_subjects[subject_id] = False
+            users_collection.update_one(
+                {'_id': student_id},
+                {'$set': {'banned_subjects': banned_subjects}}
+            )
+
+        
+        subject_lectures = list(lectures_collection.find({
+            'subject_id': ObjectId(subject_id),
+            'is_active': False
+        }))
+
+        lecture_ids = [lec['_id'] for lec in subject_lectures]
+
+        
+        attendance_collection.delete_many({
+            'student_id': student_id,
+            'lecture_id': {'$in': lecture_ids}
+        })
+
+        
+        attendance_records = []
+        now = datetime.utcnow()
+        for lec_id in lecture_ids:
+            attendance_records.append({
+                'student_id': student_id,
+                'lecture_id': lec_id,
+                'attended_at': now
+            })
+
+        if attendance_records:
+            attendance_collection.insert_many(attendance_records)
+
+        return jsonify({'success': True, 'message': f'Student {university_id} has been unbanned and absence count reset.'})
+
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)})
+    
+@doctor_bp.route('/delete_lecture/<lecture_id>', methods=['POST'])
+@doctor_required
+def delete_lecture(lecture_id):
+    doctor_id = ObjectId(session['user']['id'])
+
+    lecture = lectures_collection.find_one({
+        '_id': ObjectId(lecture_id),
+        'doctor_id': doctor_id
+    })
+
+    if not lecture:
+        flash('المحاضرة غير موجودة أو غير مسموح لك بحذفها', 'danger')
+        return redirect(url_for('doctor.lectures'))
+
+    
+    lectures_collection.update_one(
+        {'_id': ObjectId(lecture_id)},
+        {'$set': {'is_deleted': True}}
+    )
+
+    flash('تم نقل المحاضرة إلى المحذوفات', 'success')
+    return redirect(url_for('doctor.lectures'))
